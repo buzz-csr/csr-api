@@ -66,17 +66,7 @@ public class CarServiceFileImpl implements CarService {
         JsonArray caowObject = nsbObject.getJsonArray("caow");
         JsonArray cgpi = nsbObject.getJsonArray("cgpi");
         int size = caowObject.size();
-        JsonArrayBuilder cgpiBuilder = Json.createArrayBuilder(cgpi);
-        if (isLastGarageFull(cgpi)) {
-            cgpiBuilder.add(size);
-            cgpiBuilder.add(-1);
-            cgpiBuilder.add(-1);
-            cgpiBuilder.add(-1);
-            cgpiBuilder.add(-1);
-            cgpiBuilder.add(-1);
-        } else {
-            cgpiBuilder.set(size, size);
-        }
+        JsonArrayBuilder cgpiBuilder = new CgpiUpdater().update(cgpi, size);
 
         try {
             JsonObject carJson = new HttpFileReader().readJson(newCarPath);
@@ -97,10 +87,6 @@ public class CarServiceFileImpl implements CarService {
             throw new CarException(e);
         }
 
-    }
-
-    private boolean isLastGarageFull(JsonArray cgpi) {
-        return cgpi.size() % 6 == 0;
     }
 
     private JsonObject mergeFusion(JsonObject carJson, JsonObject carFull, String carId) {
