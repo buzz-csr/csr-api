@@ -1,15 +1,12 @@
 package com.naturalmotion.csr_api.service.car;
 
-import netscape.javascript.JSObject;
-import org.assertj.core.api.Assertions;
-import org.junit.Test;
+import java.util.Arrays;
 
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
 
-import java.util.Arrays;
-
-import static org.junit.Assert.*;
+import org.assertj.core.api.Assertions;
+import org.junit.Test;
 
 public class CgpiUpdaterTest {
 
