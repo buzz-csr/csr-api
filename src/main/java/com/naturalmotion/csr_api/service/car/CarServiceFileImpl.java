@@ -1,10 +1,20 @@
 package com.naturalmotion.csr_api.service.car;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
+import javax.json.JsonReader;
+
 import com.naturalmotion.csr_api.service.http.HttpCsrExcetion;
 import com.naturalmotion.csr_api.service.http.HttpFileReader;
-
-import javax.json.*;
-import java.io.*;
 
 public class CarServiceFileImpl implements CarService {
 
@@ -56,37 +66,55 @@ public class CarServiceFileImpl implements CarService {
         if (!nsb.exists()) {
             throw new CarException("Missing nsb file into Edited folder");
         }
+
+        JsonObject nsbObject = readJsonObject(nsb);
+
+        JsonArray caowObject = nsbObject.getJsonArray("caow");
+        JsonArrayBuilder cgpiNew = getCgpiNew(nsbObject, caowObject);
+
+        try {
+            String carId = nsbObject.getString("ncui");
+            JsonObject carJson = new HttpFileReader().readJson(newCarPath);
+            JsonObject carFull = getCarFull(carJson.getString("crdb"));
+            JsonObject newCarFull = mergeFusion(carJson, carFull, carId);
+
+            JsonObjectBuilder objectBuilder = copyJsonObject(nsbObject, carJson);
+            JsonArrayBuilder caow = Json.createArrayBuilder(caowObject);
+            caow.add(newCarFull);
+
+            objectBuilder.add("caow", caow);
+            objectBuilder.add("cgpi", cgpiNew);
+            objectBuilder.add("ncui", String.valueOf(Integer.getInteger(carId) + 1));
+        } catch (HttpCsrExcetion
+                | IOException e) {
+            throw new CarException(e);
+        }
+
+    }
+
+    public JsonObjectBuilder copyJsonObject(JsonObject nsbObject, JsonObject carJson) {
+        JsonObjectBuilder objectBuilder = Json.createObjectBuilder();
+        for (String key : nsbObject.keySet()) {
+            objectBuilder.add(key, carJson.get(key));
+        }
+        return objectBuilder;
+    }
+
+    public JsonArrayBuilder getCgpiNew(JsonObject nsbObject, JsonArray caowObject) {
+        JsonArray cgpi = nsbObject.getJsonArray("cgpi");
+        int size = caowObject.size();
+        JsonArrayBuilder cgpiNew = new CgpiUpdater().update(cgpi, size);
+        return cgpiNew;
+    }
+
+    public JsonObject readJsonObject(File nsb) {
         JsonObject nsbObject = null;
         try (JsonReader reader = Json.createReader(new FileInputStream(nsb));) {
             nsbObject = reader.readObject();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        String carId = nsbObject.getString("ncui");
-        JsonArray caowObject = nsbObject.getJsonArray("caow");
-        JsonArray cgpi = nsbObject.getJsonArray("cgpi");
-        int size = caowObject.size();
-        JsonArrayBuilder cgpiBuilder = new CgpiUpdater().update(cgpi, size);
-
-        try {
-            JsonObject carJson = new HttpFileReader().readJson(newCarPath);
-            JsonObject carFull = getCarFull(carJson.getString("crdb"));
-            JsonObject newCarFull = mergeFusion(carJson, carFull, carId);
-
-            JsonObjectBuilder objectBuilder = Json.createObjectBuilder();
-            for (String key : nsbObject.keySet()) {
-                objectBuilder.add(key, carJson.get(key));
-            }
-            JsonArrayBuilder caow = Json.createArrayBuilder(caowObject);
-            caow.add(newCarFull);
-            objectBuilder.add("caow", caow);
-            objectBuilder.add("cgpi", cgpiBuilder);
-            objectBuilder.add("ncui", String.valueOf(Integer.getInteger(carId) + 1));
-
-        } catch (HttpCsrExcetion | IOException e) {
-            throw new CarException(e);
-        }
-
+        return nsbObject;
     }
 
     private JsonObject mergeFusion(JsonObject carJson, JsonObject carFull, String carId) {
