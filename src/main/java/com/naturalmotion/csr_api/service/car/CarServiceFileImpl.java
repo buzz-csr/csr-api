@@ -21,6 +21,12 @@ import com.naturalmotion.csr_api.service.http.HttpFileReader;
 
 public class CarServiceFileImpl implements CarService {
 
+    private static final String CAOW = "caow";
+
+    private static final String CRDB = "crdb";
+
+    private static final String UNID = "unid";
+
     private final String path;
 
     public CarServiceFileImpl(String path) {
@@ -28,40 +34,59 @@ public class CarServiceFileImpl implements CarService {
     }
 
     @Override
-    public void replace(String idToReplace, String newCarPath) {
-
-    }
-
-    @Override
-    public void full(String id) throws CarException {
-        JsonObject jsonCarFull = getJsonCarFull(id);
+    public void replace(int idToReplace, String newCarPath) throws CarException {
+        JsonObject newCarFull = createNewCarFull(idToReplace, newCarPath);
 
         File nsb = getNsbFile();
         JsonObject nsbObject = readJsonObject(nsb);
-        JsonArray caowObject = nsbObject.getJsonArray("caow");
-        JsonObject jsonCarToMax = findCar(id, caowObject);
-        JsonObject newCarFull = mergeFusion(jsonCarToMax, jsonCarFull, jsonCarToMax.getInt("unid"));
-
-        JsonArrayBuilder newCaow = createNewCaow(id, caowObject, newCarFull);
+        JsonArray caowObject = nsbObject.getJsonArray(CAOW);
+        JsonArrayBuilder newCaow = createNewCaow(idToReplace, caowObject, newCarFull);
         JsonObjectBuilder newNsb = copyJsonObject(nsbObject);
-        newNsb.add("caow", newCaow);
+        newNsb.add(CAOW, newCaow);
 
         writeNsb(nsb, newNsb);
     }
 
-    public JsonObject getJsonCarFull(String id) throws CarException {
-        JsonObject nsbFull = readNsbFull();
-        JsonArray carList = nsbFull.getJsonArray("caow");
-        return findCar(id, carList);
+    @Override
+    public void full(int id) throws CarException {
+        File nsb = getNsbFile();
+        JsonObject nsbObject = readJsonObject(nsb);
+        JsonArray caowObject = nsbObject.getJsonArray(CAOW);
+        JsonObject jsonCarToMax = findCarFromId(id, caowObject);
+
+        if (jsonCarToMax != null) {
+            String name = jsonCarToMax.getString(CRDB);
+            JsonObject jsonCarFull = getJsonCarFull(name);
+
+            if (jsonCarFull != null) {
+                JsonObject newCarFull = mergeFusion(jsonCarToMax, jsonCarFull, id);
+
+                JsonArrayBuilder newCaow = createNewCaow(id, caowObject, newCarFull);
+                JsonObjectBuilder newNsb = copyJsonObject(nsbObject);
+                newNsb.add(CAOW, newCaow);
+
+                writeNsb(nsb, newNsb);
+            } else {
+                throw new CarException("Car name " + name + " not found into nsb full");
+            }
+        } else {
+            throw new CarException("Car unid " + id + " not found into nsb");
+        }
     }
 
-    public JsonArrayBuilder createNewCaow(String id, JsonArray caowObject, JsonObject newCarFull) {
+    private JsonObject getJsonCarFull(String carName) throws CarException {
+        JsonObject nsbFull = readNsbFull();
+        JsonArray carList = nsbFull.getJsonArray(CAOW);
+        return findCarFromName(carName, carList);
+    }
+
+    private JsonArrayBuilder createNewCaow(int id, JsonArray caowObject, JsonObject newCarFull) {
         JsonArrayBuilder newCaow = Json.createArrayBuilder();
         int pos = 0;
         while (pos < caowObject.size()) {
             JsonObject carTemp = caowObject.getJsonObject(pos);
-            String idTemp = carTemp.getString("crdb");
-            if (!id.equals(idTemp)) {
+            int idTemp = carTemp.getInt(UNID);
+            if (id != idTemp) {
                 newCaow.add(carTemp);
             } else {
                 newCaow.add(newCarFull);
@@ -71,13 +96,13 @@ public class CarServiceFileImpl implements CarService {
         return newCaow;
     }
 
-    public JsonObject findCar(String id, JsonArray carList) {
+    private JsonObject findCarFromId(int id, JsonArray carList) {
         JsonObject jsonCar = null;
         int pos = 0;
         while (jsonCar == null && pos < carList.size()) {
             JsonObject carTemp = carList.getJsonObject(pos);
-            String idTemp = carTemp.getString("crdb");
-            if (id.equals(idTemp)) {
+            int idTemp = carTemp.getInt(UNID);
+            if (id == idTemp) {
                 jsonCar = carTemp;
             }
             pos++;
@@ -85,7 +110,21 @@ public class CarServiceFileImpl implements CarService {
         return jsonCar;
     }
 
-    public JsonObject readNsbFull() throws CarException {
+    private JsonObject findCarFromName(String carName, JsonArray carList) {
+        JsonObject jsonCar = null;
+        int pos = 0;
+        while (jsonCar == null && pos < carList.size()) {
+            JsonObject carTemp = carList.getJsonObject(pos);
+            String idTemp = carTemp.getString(CRDB);
+            if (carName.equals(idTemp)) {
+                jsonCar = carTemp;
+            }
+            pos++;
+        }
+        return jsonCar;
+    }
+
+    private JsonObject readNsbFull() throws CarException {
         JsonObject json = null;
         File nsbFull = new File("src/main/resources/nsb.full.txt");
         try (InputStream fis = new FileInputStream(nsbFull); JsonReader reader = Json.createReader(fis);) {
@@ -101,7 +140,7 @@ public class CarServiceFileImpl implements CarService {
         File nsb = getNsbFile();
         JsonObject nsbObject = readJsonObject(nsb);
 
-        JsonArray caowObject = nsbObject.getJsonArray("caow");
+        JsonArray caowObject = nsbObject.getJsonArray(CAOW);
         JsonArrayBuilder cgpiNew = getCgpiNew(nsbObject, caowObject);
 
         int carId = nsbObject.getInt("ncui");
@@ -111,7 +150,7 @@ public class CarServiceFileImpl implements CarService {
         caow.add(newCarFull);
 
         JsonObjectBuilder copyNsbObject = copyJsonObject(nsbObject);
-        copyNsbObject.add("caow", caow);
+        copyNsbObject.add(CAOW, caow);
         copyNsbObject.add("cgpi", cgpiNew);
         copyNsbObject.add("ncui", ++carId);
 
@@ -129,7 +168,7 @@ public class CarServiceFileImpl implements CarService {
     private JsonObject createNewCarFull(int carId, String newCarPath) throws CarException {
         try {
             JsonObject carJson = new HttpFileReader().readJson(newCarPath);
-            JsonObject carFull = getCarFull(carJson.getString("crdb"));
+            JsonObject carFull = getCarFull(carJson.getString(CRDB));
             return mergeFusion(carJson, carFull, carId);
         } catch (HttpCsrExcetion
                 | IOException e) {
@@ -176,12 +215,9 @@ public class CarServiceFileImpl implements CarService {
     private JsonObject mergeFusion(JsonObject carJson, JsonObject carFull, int carId) {
         JsonObjectBuilder objectBuilder = Json.createObjectBuilder();
         for (Entry<String, JsonValue> entry : carJson.entrySet()) {
-            if ("unid".equals(entry.getKey())) {
-                objectBuilder.add("unid", carId);
-            } else {
-                objectBuilder.add(entry.getKey(), entry.getValue());
-            }
+            objectBuilder.add(entry.getKey(), entry.getValue());
         }
+        objectBuilder.add(UNID, carId);
         JsonArrayBuilder upst = Json.createArrayBuilder(carFull.getJsonArray("upst"));
         objectBuilder.add("upst", upst);
         return objectBuilder.build();
@@ -192,11 +228,11 @@ public class CarServiceFileImpl implements CarService {
         File nsbFull = new File("src/main/resources/nsb.full.txt");
         try (InputStream fis = new FileInputStream(nsbFull); JsonReader reader = Json.createReader(fis);) {
             JsonObject json = reader.readObject();
-            JsonArray carList = json.getJsonArray("caow");
+            JsonArray carList = json.getJsonArray(CAOW);
             int pos = 0;
             while (carFull == null && pos < carList.size()) {
                 JsonObject carTemp = carList.getJsonObject(pos);
-                String id = carTemp.getString("crdb");
+                String id = carTemp.getString(CRDB);
 
                 if (id.equals(searchId)) {
                     carFull = carTemp;

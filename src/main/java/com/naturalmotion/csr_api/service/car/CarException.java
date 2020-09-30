@@ -1,8 +1,8 @@
 package com.naturalmotion.csr_api.service.car;
 
-import com.naturalmotion.csr_api.service.http.HttpCsrExcetion;
+public class CarException extends Exception {
 
-public class CarException extends Throwable {
+    private static final long serialVersionUID = -8251551617551347910L;
 
     public CarException(String s) {
         super(s);

@@ -9,11 +9,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
+import java.util.Iterator;
 
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
+import javax.json.JsonValue;
 
 import org.junit.After;
 import org.junit.Before;
@@ -68,7 +70,7 @@ public class CarServiceFileImplTest extends NsbEditedTest {
 
     @Test
     public void testFull() throws Exception, CarException {
-        service.full("BMW_LBM4CoupeCrewRecycled_2014");
+        service.full(197); // BMW_LBM4CoupeCrewRecycled_2014
 
         JsonObject nsbExpected = getNsb("target/Edited/nsb.json");
         JsonArray caow = nsbExpected.getJsonArray("caow");
@@ -90,6 +92,30 @@ public class CarServiceFileImplTest extends NsbEditedTest {
             }
         });
 
+    }
+
+    @Test
+    public void testReplace() throws Exception {
+        service.replace(197, // BMW_LBM4CoupeCrewRecycled_2014
+                "/V2.15.0/Lamborghini LB Murcielago LP670-4 SuperVeloce/Golden Star/Arancio Borealis.txt");
+
+        JsonObject search = findCar(197);
+        assertThat(search).isNotNull();
+        assertThat(search.getString("crdb")).isEqualTo("Lamborghini_LBMurcielagoSVRewardRecycled_2009");
+    }
+
+    public JsonObject findCar(int carId) throws IOException, FileNotFoundException {
+        JsonObject search = null;
+        JsonObject nsbExpected = getNsb("target/Edited/nsb.json");
+        JsonArray caow = nsbExpected.getJsonArray("caow");
+        Iterator<JsonValue> iterator = caow.iterator();
+        while (iterator.hasNext()) {
+            JsonObject car = iterator.next().asJsonObject();
+            if (car.getInt("unid") == carId) {
+                search = car;
+            }
+        }
+        return search;
     }
 
 }
