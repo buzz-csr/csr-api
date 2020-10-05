@@ -48,7 +48,9 @@ public class CarServiceFileImpl implements CarService {
     }
 
     @Override
-    public void full(int id) throws CarException {
+    public JsonObject full(int id) throws CarException {
+        JsonObject carFull = null;
+
         File nsb = getNsbFile();
         JsonObject nsbObject = readJsonObject(nsb);
         JsonArray caowObject = nsbObject.getJsonArray(CAOW);
@@ -64,14 +66,16 @@ public class CarServiceFileImpl implements CarService {
                 JsonArrayBuilder newCaow = createNewCaow(id, caowObject, newCarFull);
                 JsonObjectBuilder newNsb = copyJsonObject(nsbObject);
                 newNsb.add(CAOW, newCaow);
-
                 writeNsb(nsb, newNsb);
+
+                carFull = newCarFull.asJsonObject();
             } else {
                 throw new CarException("Car name " + name + " not found into nsb full");
             }
         } else {
             throw new CarException("Car unid " + id + " not found into nsb");
         }
+        return carFull;
     }
 
     private JsonObject getJsonCarFull(String carName) throws CarException {
@@ -126,8 +130,9 @@ public class CarServiceFileImpl implements CarService {
 
     private JsonObject readNsbFull() throws CarException {
         JsonObject json = null;
-        File nsbFull = new File("src/main/resources/nsb.full.txt");
-        try (InputStream fis = new FileInputStream(nsbFull); JsonReader reader = Json.createReader(fis);) {
+
+        try (InputStream fis = this.getClass().getClassLoader().getResourceAsStream("nsb.full.txt");
+                JsonReader reader = Json.createReader(fis);) {
             json = reader.readObject();
         } catch (IOException e) {
             throw new CarException(e);
@@ -225,8 +230,8 @@ public class CarServiceFileImpl implements CarService {
 
     private JsonObject getCarFull(String searchId) throws IOException {
         JsonObject carFull = null;
-        File nsbFull = new File("src/main/resources/nsb.full.txt");
-        try (InputStream fis = new FileInputStream(nsbFull); JsonReader reader = Json.createReader(fis);) {
+        try (InputStream fis = this.getClass().getClassLoader().getResourceAsStream("nsb.full.txt");
+                JsonReader reader = Json.createReader(fis);) {
             JsonObject json = reader.readObject();
             JsonArray carList = json.getJsonArray(CAOW);
             int pos = 0;
