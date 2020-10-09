@@ -34,7 +34,7 @@ public class CarServiceFileImpl implements CarService {
     }
 
     @Override
-    public void replace(int idToReplace, String newCarPath) throws CarException {
+    public JsonObject replace(int idToReplace, String newCarPath) throws CarException {
         JsonObject newCarFull = createNewCarFull(idToReplace, newCarPath);
 
         File nsb = getNsbFile();
@@ -45,6 +45,7 @@ public class CarServiceFileImpl implements CarService {
         newNsb.add(CAOW, newCaow);
 
         writeNsb(nsb, newNsb);
+        return newCarFull;
     }
 
     @Override
@@ -225,6 +226,19 @@ public class CarServiceFileImpl implements CarService {
         objectBuilder.add(UNID, carId);
         JsonArrayBuilder upst = Json.createArrayBuilder(carFull.getJsonArray("upst"));
         objectBuilder.add("upst", upst);
+        JsonArrayBuilder grsp = Json.createArrayBuilder(carFull.getJsonArray("grsp"));
+        objectBuilder.add("grsp", grsp);
+        objectBuilder.add("fidr", carFull.getJsonNumber("fidr"));
+        objectBuilder.add("nlpr", carFull.getJsonNumber("nlpr"));
+        objectBuilder.add("tafr", carFull.getJsonNumber("tafr"));
+        objectBuilder.add("titp", carFull.getJsonNumber("titp"));
+        objectBuilder.add("trld", carFull.getJsonNumber("trld"));
+        objectBuilder.add("fidr", carFull.getJsonNumber("fidr"));
+        objectBuilder.add("tssp", carFull.getJsonNumber("tssp"));
+        objectBuilder.add("tssr", carFull.getJsonNumber("tssr"));
+        objectBuilder.add("ttup", carFull.getJsonNumber("ttup"));
+        objectBuilder.add("ttpp", carFull.getJsonNumber("ttpp"));
+        objectBuilder.add("cepi", carFull.getJsonNumber("cepi"));
         return objectBuilder.build();
     }
 

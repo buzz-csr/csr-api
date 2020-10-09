@@ -10,16 +10,7 @@ public class HttpFileReaderTest {
 
     @Test
     public void testRead() throws HttpCsrExcetion {
-        Authenticator authenticator = new Authenticator() {
-
-            @Override
-            public PasswordAuthentication getPasswordAuthentication() {
-                return (new PasswordAuthentication("jdesachy", "Juillet$032020".toCharArray()));
-            }
-        };
-        Authenticator.setDefault(authenticator);
-
-        String read = new HttpFileReader().read("/Cars/Chevrolet/COPO Camaro/Black.txt");
+        String read = new HttpFileReader().read("/Cars/Audi/2014 LB R8 V10 Plus Coupé/Ara Blue Crystal (2).txt");
         Assertions.assertThat(read).isNotNull();
     }
 }

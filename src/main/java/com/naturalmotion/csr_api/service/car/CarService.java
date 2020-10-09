@@ -4,7 +4,7 @@ import javax.json.JsonObject;
 
 public interface CarService {
 
-    public void replace(int idToReplace, String newCarPath) throws CarException;
+    public JsonObject replace(int idToReplace, String newCarPath) throws CarException;
 
     public JsonObject full(int id) throws CarException;
 
