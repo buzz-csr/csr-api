@@ -66,4 +66,19 @@
         <scope>test</scope>
     </dependency>
   </dependencies>
+
+    <profiles>
+        <profile>
+            <id>linux</id>
+            <properties>
+                <csr.collection.directory>/home/jerome/Documents/Projets/CSR2-Racing-Collection</csr.collection.directory>
+            </properties>
+        </profile>
+        <profile>
+            <id>windows</id>
+            <properties>
+                <csr.collection.directory>C:/Users/stephanie/Documents/Projets/CSR2-Racing-Collection</csr.collection.directory>
+            </properties>
+       </profile>
+    </profiles>
 </project>
