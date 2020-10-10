@@ -48,7 +48,7 @@ public class CarServiceFileImplTest extends NsbEditedTest {
 
     @Test
     public void testAdd() throws Exception, CarException {
-        service.add("/V2.15.0/Lamborghini LB Murcielago LP670-4 SuperVeloce/Golden Star/Arancio Borealis.txt");
+        service.add("/Cars/Ford/F-150 SVT Raptor/Ruby Red.txt");
 
         JsonObject nsbExpected = getNsb("src/test/resources/Edited/nsb.json");
         assertThat(nsbExpected.getInt("ncui")).isEqualTo(1141);
@@ -97,7 +97,7 @@ public class CarServiceFileImplTest extends NsbEditedTest {
     @Test
     public void testReplace() throws Exception {
         service.replace(197, // BMW_LBM4CoupeCrewRecycled_2014
-                "/V2.15.0/Lamborghini LB Murcielago LP670-4 SuperVeloce/Golden Star/Arancio Borealis.txt");
+                "/Cars/Lamborghini/LB Murcielago LP670-4 SuperVeloce/Arancio Borealis.txt");
 
         JsonObject search = findCar(197);
         assertThat(search).isNotNull();
