@@ -81,5 +81,11 @@
                 <csr.collection.directory>C:/Users/stephanie/Documents/Projets/CSR2-Racing-Collection</csr.collection.directory>
             </properties>
        </profile>
+        <profile>
+            <id>bureau</id>
+            <properties>
+                <csr.collection.directory>C:/Dev/Git/perso/CSR2-Racing-Collection</csr.collection.directory>
+            </properties>
+       </profile>
     </profiles>
 </project>
