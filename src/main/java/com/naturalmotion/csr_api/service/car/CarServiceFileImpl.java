@@ -18,6 +18,10 @@ import javax.json.JsonValue;
 
 import com.naturalmotion.csr_api.service.http.HttpCsrExcetion;
 import com.naturalmotion.csr_api.service.http.HttpFileReader;
+import com.naturalmotion.csr_api.service.io.JsonCopy;
+import com.naturalmotion.csr_api.service.io.NsbException;
+import com.naturalmotion.csr_api.service.io.NsbReader;
+import com.naturalmotion.csr_api.service.io.NsbWriter;
 
 public class CarServiceFileImpl implements CarService {
 
@@ -29,31 +33,37 @@ public class CarServiceFileImpl implements CarService {
 
     private final String path;
 
+    private NsbWriter nsbWriter = new NsbWriter();
+
+    private NsbReader nsbReader = new NsbReader();
+
+    private JsonCopy jsonCopy = new JsonCopy();
+
     public CarServiceFileImpl(String path) {
         this.path = path;
     }
 
     @Override
-    public JsonObject replace(int idToReplace, String newCarPath) throws CarException {
+    public JsonObject replace(int idToReplace, String newCarPath) throws CarException, NsbException {
         JsonObject newCarFull = createNewCarFull(idToReplace, newCarPath);
 
-        File nsb = getNsbFile();
-        JsonObject nsbObject = readJsonObject(nsb);
+        File nsb = nsbReader.getNsbFile(path);
+        JsonObject nsbObject = nsbReader.readJsonObject(nsb);
         JsonArray caowObject = nsbObject.getJsonArray(CAOW);
         JsonArrayBuilder newCaow = createNewCaow(idToReplace, caowObject, newCarFull);
-        JsonObjectBuilder newNsb = copyJsonObject(nsbObject);
+        JsonObjectBuilder newNsb = jsonCopy.copyObject(nsbObject);
         newNsb.add(CAOW, newCaow);
 
-        writeNsb(nsb, newNsb);
+        nsbWriter.writeNsb(nsb, newNsb);
         return newCarFull;
     }
 
     @Override
-    public JsonObject full(int id) throws CarException {
+    public JsonObject full(int id) throws CarException, NsbException {
         JsonObject carFull = null;
 
-        File nsb = getNsbFile();
-        JsonObject nsbObject = readJsonObject(nsb);
+        File nsb = nsbReader.getNsbFile(path);
+        JsonObject nsbObject = nsbReader.readJsonObject(nsb);
         JsonArray caowObject = nsbObject.getJsonArray(CAOW);
         JsonObject jsonCarToMax = findCarFromId(id, caowObject);
 
@@ -65,9 +75,9 @@ public class CarServiceFileImpl implements CarService {
                 JsonObject newCarFull = mergeFusion(jsonCarToMax, jsonCarFull, id);
 
                 JsonArrayBuilder newCaow = createNewCaow(id, caowObject, newCarFull);
-                JsonObjectBuilder newNsb = copyJsonObject(nsbObject);
+                JsonObjectBuilder newNsb = jsonCopy.copyObject(nsbObject);
                 newNsb.add(CAOW, newCaow);
-                writeNsb(nsb, newNsb);
+                nsbWriter.writeNsb(nsb, newNsb);
 
                 carFull = newCarFull.asJsonObject();
             } else {
@@ -79,8 +89,8 @@ public class CarServiceFileImpl implements CarService {
         return carFull;
     }
 
-    private JsonObject getJsonCarFull(String carName) throws CarException {
-        JsonObject nsbFull = readNsbFull();
+    private JsonObject getJsonCarFull(String carName) throws NsbException {
+        JsonObject nsbFull = nsbReader.getNsbFull();
         JsonArray carList = nsbFull.getJsonArray(CAOW);
         return findCarFromName(carName, carList);
     }
@@ -129,22 +139,10 @@ public class CarServiceFileImpl implements CarService {
         return jsonCar;
     }
 
-    private JsonObject readNsbFull() throws CarException {
-        JsonObject json = null;
-
-        try (InputStream fis = this.getClass().getClassLoader().getResourceAsStream("nsb.full.txt");
-                JsonReader reader = Json.createReader(fis);) {
-            json = reader.readObject();
-        } catch (IOException e) {
-            throw new CarException(e);
-        }
-        return json;
-    }
-
     @Override
-    public void add(String newCarPath) throws CarException {
-        File nsb = getNsbFile();
-        JsonObject nsbObject = readJsonObject(nsb);
+    public void add(String newCarPath) throws CarException, NsbException {
+        File nsb = nsbReader.getNsbFile(path);
+        JsonObject nsbObject = nsbReader.readJsonObject(nsb);
 
         JsonArray caowObject = nsbObject.getJsonArray(CAOW);
         JsonArrayBuilder cgpiNew = getCgpiNew(nsbObject, caowObject);
@@ -155,20 +153,12 @@ public class CarServiceFileImpl implements CarService {
         JsonArrayBuilder caow = Json.createArrayBuilder(caowObject);
         caow.add(newCarFull);
 
-        JsonObjectBuilder copyNsbObject = copyJsonObject(nsbObject);
+        JsonObjectBuilder copyNsbObject = jsonCopy.copyObject(nsbObject);
         copyNsbObject.add(CAOW, caow);
         copyNsbObject.add("cgpi", cgpiNew);
         copyNsbObject.add("ncui", ++carId);
 
-        writeNsb(nsb, copyNsbObject);
-    }
-
-    private void writeNsb(File nsb, JsonObjectBuilder copyNsbObject) throws CarException {
-        try (FileWriter fileWriter = new FileWriter(nsb);) {
-            fileWriter.write(copyNsbObject.build().toString());
-        } catch (IOException e) {
-            throw new CarException(e);
-        }
+        nsbWriter.writeNsb(nsb, copyNsbObject);
     }
 
     private JsonObject createNewCarFull(int carId, String newCarPath) throws CarException {
@@ -182,48 +172,16 @@ public class CarServiceFileImpl implements CarService {
         }
     }
 
-    private File getNsbFile() throws CarException {
-        File editedDirectory = new File(path + "/Edited");
-        if (!editedDirectory.exists()) {
-            throw new CarException(path + " doesn't exist");
-        }
-        File nsb = new File(editedDirectory.getAbsolutePath() + "/nsb.json");
-        if (!nsb.exists()) {
-            throw new CarException("Missing nsb file into Edited folder");
-        }
-        return nsb;
-    }
-
-    private JsonObjectBuilder copyJsonObject(JsonObject nsbObject) {
-        JsonObjectBuilder objectBuilder = Json.createObjectBuilder();
-        for (Entry<String, JsonValue> entry : nsbObject.entrySet()) {
-            objectBuilder.add(entry.getKey(), entry.getValue());
-        }
-        return objectBuilder;
-    }
-
     private JsonArrayBuilder getCgpiNew(JsonObject nsbObject, JsonArray caowObject) {
         JsonArray cgpi = nsbObject.getJsonArray("cgpi");
         int size = caowObject.size();
         return new CgpiUpdater().update(cgpi, size);
     }
 
-    private JsonObject readJsonObject(File nsb) throws CarException {
-        JsonObject nsbObject = null;
-        try (JsonReader reader = Json.createReader(new FileInputStream(nsb));) {
-            nsbObject = reader.readObject();
-        } catch (FileNotFoundException e) {
-            throw new CarException(e);
-        }
-        return nsbObject;
-    }
-
     private JsonObject mergeFusion(JsonObject carJson, JsonObject carFull, int carId) {
-        JsonObjectBuilder objectBuilder = Json.createObjectBuilder();
-        for (Entry<String, JsonValue> entry : carJson.entrySet()) {
-            objectBuilder.add(entry.getKey(), entry.getValue());
-        }
+        JsonObjectBuilder objectBuilder = jsonCopy.copyObject(carJson);
         objectBuilder.add(UNID, carId);
+
         JsonArrayBuilder upst = Json.createArrayBuilder(carFull.getJsonArray("upst"));
         objectBuilder.add("upst", upst);
         JsonArrayBuilder grsp = Json.createArrayBuilder(carFull.getJsonArray("grsp"));
@@ -245,7 +203,7 @@ public class CarServiceFileImpl implements CarService {
     private JsonObject getCarFull(String searchId) throws IOException {
         JsonObject carFull = null;
         try (InputStream fis = this.getClass().getClassLoader().getResourceAsStream("nsb.full.txt");
-                JsonReader reader = Json.createReader(fis);) {
+             JsonReader reader = Json.createReader(fis);) {
             JsonObject json = reader.readObject();
             JsonArray carList = json.getJsonArray(CAOW);
             int pos = 0;

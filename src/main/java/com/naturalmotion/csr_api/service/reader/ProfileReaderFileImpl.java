@@ -5,18 +5,23 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.regex.Pattern;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
+import javax.json.*;
 
 import com.naturalmotion.csr_api.Configuration;
 import com.naturalmotion.csr_api.api.Resource;
 import com.naturalmotion.csr_api.api.ResourceType;
+import com.naturalmotion.csr_api.service.car.CarException;
+import com.naturalmotion.csr_api.service.io.NsbException;
+import com.naturalmotion.csr_api.service.io.NsbReader;
 
 public class ProfileReaderFileImpl implements ProfileReader {
+
+    private NsbReader nsbReader = new NsbReader();
+
+    private Pattern pattern = Pattern.compile("_");
 
     private String path;
 
@@ -51,6 +56,24 @@ public class ProfileReaderFileImpl implements ProfileReader {
         }
 
         return resources;
+    }
+
+    @Override
+    public List<String> getBrands() throws NsbException {
+        Set<String> brands = new HashSet<>();
+
+        JsonObject nsbFull = nsbReader.getNsbFull();
+        JsonArray carList = nsbFull.getJsonArray("caow");
+        Iterator<JsonValue> iterator = carList.iterator();
+        while (iterator.hasNext()) {
+            JsonObject car = iterator.next().asJsonObject();
+            String id = car.getString("crdb");
+            String brand = pattern.split(id)[0];
+            brands.add("id_" + brand.toLowerCase());
+        }
+        ArrayList<String> result = new ArrayList<>(brands);
+        Collections.sort(result);
+        return result;
     }
 
     private Resource createResource(ResourceType type, JsonObject personObject, Configuration conf) {
