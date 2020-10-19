@@ -1,15 +1,21 @@
 package com.naturalmotion.csr_api.service.gift;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.json.Json;
+import javax.json.JsonArray;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
+
+import com.naturalmotion.csr_api.api.EliteTokenParam;
 import com.naturalmotion.csr_api.api.FusionColor;
-import com.naturalmotion.csr_api.service.car.CarException;
 import com.naturalmotion.csr_api.service.io.JsonCopy;
 import com.naturalmotion.csr_api.service.io.NsbException;
 import com.naturalmotion.csr_api.service.io.NsbReader;
 import com.naturalmotion.csr_api.service.io.NsbWriter;
-
-import javax.json.*;
-import java.io.File;
-import java.util.List;
 
 public class GiftServiceFileImpl implements GiftService {
 
@@ -45,7 +51,12 @@ public class GiftServiceFileImpl implements GiftService {
     }
 
     @Override
-    public JsonObject addEliteToken() {
+    public JsonObject addEliteToken(List<EliteTokenParam> tokenParams) throws NsbException {
+        List<JsonObjectBuilder> gifts = new ArrayList<>();
+        for (EliteTokenParam param : tokenParams) {
+            gifts.add(builder.buildEliteToken(param.getToken(), param.getAmount()));
+        }
+
         return null;
     }
 

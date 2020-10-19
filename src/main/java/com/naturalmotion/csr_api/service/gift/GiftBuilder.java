@@ -1,12 +1,20 @@
 package com.naturalmotion.csr_api.service.gift;
 
+import java.math.BigDecimal;
+
 import javax.json.Json;
 import javax.json.JsonObjectBuilder;
+
+import com.naturalmotion.csr_api.api.EliteToken;
 
 public class GiftBuilder {
 
     public JsonObjectBuilder buildEssence(String id) {
         return build(id, 10, "", 7, 0, 2000);
+    }
+
+    public JsonObjectBuilder buildEliteToken(EliteToken token, BigDecimal amount) {
+        return build("1592077438_24_0", 24, "", 7, token.getGrade(), amount.intValue());
     }
 
     private JsonObjectBuilder build(String id, int type, String name, int part, int grade, int amount) {

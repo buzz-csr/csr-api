@@ -1,9 +1,6 @@
 package com.naturalmotion.csr_api.service.car;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map.Entry;
@@ -140,7 +137,7 @@ public class CarServiceFileImpl implements CarService {
     }
 
     @Override
-    public JsonObject add(String newCarPath) throws CarException {
+    public JsonObject add(String newCarPath) throws CarException, NsbException {
         File nsb = nsbReader.getNsbFile(path);
         JsonObject nsbObject = nsbReader.readJsonObject(nsb);
 
@@ -159,7 +156,7 @@ public class CarServiceFileImpl implements CarService {
         copyNsbObject.add("ncui", ++carId);
 
         nsbWriter.writeNsb(nsb, copyNsbObject);
-		return newCarFull;
+        return newCarFull;
     }
 
     private JsonObject createNewCarFull(int carId, String newCarPath) throws CarException {
@@ -204,7 +201,7 @@ public class CarServiceFileImpl implements CarService {
     private JsonObject getCarFull(String searchId) throws IOException {
         JsonObject carFull = null;
         try (InputStream fis = this.getClass().getClassLoader().getResourceAsStream("nsb.full.txt");
-             JsonReader reader = Json.createReader(fis);) {
+                JsonReader reader = Json.createReader(fis);) {
             JsonObject json = reader.readObject();
             JsonArray carList = json.getJsonArray(CAOW);
             int pos = 0;
@@ -222,9 +219,9 @@ public class CarServiceFileImpl implements CarService {
     }
 
     @Override
-    public JsonObject elite(int id) throws CarException {
-        File nsb = getNsbFile();
-        JsonObject nsbObject = readJsonObject(nsb);
+    public JsonObject elite(int id) throws CarException, NsbException {
+        File nsb = nsbReader.getNsbFile(path);
+        JsonObject nsbObject = nsbReader.readJsonObject(nsb);
         JsonArray caowObject = nsbObject.getJsonArray(CAOW);
         JsonObject jsonCarToUpdate = findCarFromId(id, caowObject);
         JsonObjectBuilder carBuilder = Json.createObjectBuilder();
@@ -238,9 +235,9 @@ public class CarServiceFileImpl implements CarService {
 
             newCar = carBuilder.build();
             JsonArrayBuilder newCaow = createNewCaow(id, caowObject, newCar);
-            JsonObjectBuilder newNsb = copyJsonObject(nsbObject);
+            JsonObjectBuilder newNsb = jsonCopy.copyObject(nsbObject);
             newNsb.add(CAOW, newCaow);
-            writeNsb(nsb, newNsb);
+            nsbWriter.writeNsb(nsb, newNsb);
         }
 
         return newCar;
