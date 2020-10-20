@@ -4,24 +4,21 @@ import java.math.BigDecimal;
 
 public class EliteTokenParam {
 
-    private EliteToken token;
+    private final EliteToken token;
 
-    private BigDecimal amount;
+    private final BigDecimal amount;
+
+    public EliteTokenParam(EliteToken token, BigDecimal amount) {
+        this.token = token;
+        this.amount = amount;
+    }
 
     public EliteToken getToken() {
         return token;
     }
 
-    public void setToken(EliteToken token) {
-        this.token = token;
-    }
-
     public BigDecimal getAmount() {
         return amount;
-    }
-
-    public void setAmount(BigDecimal amount) {
-        this.amount = amount;
     }
 
 }

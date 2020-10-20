@@ -11,8 +11,8 @@ import java.math.BigDecimal;
 
 public class GiftBuilder {
 
-    public JsonObjectBuilder buildFusion(String id, String brand, CarElement element, FusionColor color, int amount) {
-        return build(id, 13, brand, element.getPartType(), color.getGrade(), amount);
+    public JsonObjectBuilder buildFusion(String id, String brand, CarElement element, FusionColor color, BigDecimal amount) {
+        return build(id, 13, brand, element.getPartType(), color.getGrade(), amount.intValue());
     }
 
     public JsonObjectBuilder buildEssence(String id) {

@@ -14,6 +14,7 @@ import javax.json.JsonObjectBuilder;
 
 import com.naturalmotion.csr_api.api.EliteTokenParam;
 import com.naturalmotion.csr_api.api.FusionColor;
+import com.naturalmotion.csr_api.api.FusionParam;
 import com.naturalmotion.csr_api.service.io.JsonCopy;
 import com.naturalmotion.csr_api.service.io.NsbException;
 import com.naturalmotion.csr_api.service.io.NsbReader;
@@ -21,6 +22,7 @@ import com.naturalmotion.csr_api.service.io.NsbWriter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+
 public class GiftServiceFileImpl implements GiftService {
 
     private NsbWriter nsbWriter = new NsbWriter();
@@ -50,13 +52,14 @@ public class GiftServiceFileImpl implements GiftService {
     }
 
     @Override
-    public JsonObject addFusions(List<FusionColor> colors, List<String> brands) throws NsbException {
+    public JsonObject addFusions(List<FusionParam> colors, List<String> brands) throws NsbException {
         List<JsonObjectBuilder> gifts = new ArrayList<>();
         int index = 0;
         for (String brand : brands) {
-            for (FusionColor color : colors) {
+            for (FusionParam fusion : colors) {
                 for (CarElement element : CarElement.values()) {
-                    gifts.add(builder.buildFusion(String.valueOf(index++), brand, element, color, 10));
+                    gifts.add(builder.buildFusion(String.valueOf(index++), brand, element, fusion.getColor(),
+                            fusion.getQuantity()));
                 }
             }
         }
@@ -76,7 +79,12 @@ public class GiftServiceFileImpl implements GiftService {
             gifts.add(builder.buildEliteToken(param.getToken(), param.getAmount()));
         }
 
-        return null;
+        File nsb = nsbReader.getNsbFile(path);
+        JsonObject nsbObject = nsbReader.readJsonObject(nsb);
+
+        JsonObjectBuilder newNsb = addGift(gifts, nsbObject);
+        nsbWriter.writeNsb(nsb, newNsb);
+        return newNsb.build();
     }
 
     @Override
