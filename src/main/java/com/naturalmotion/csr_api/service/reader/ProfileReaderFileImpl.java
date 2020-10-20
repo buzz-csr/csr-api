@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.json.*;
@@ -21,7 +22,7 @@ public class ProfileReaderFileImpl implements ProfileReader {
 
     private NsbReader nsbReader = new NsbReader();
 
-    private Pattern pattern = Pattern.compile("_");
+    private Pattern pattern = Pattern.compile("(.*)_(.*)");
 
     private String path;
 
@@ -68,10 +69,13 @@ public class ProfileReaderFileImpl implements ProfileReader {
         while (iterator.hasNext()) {
             JsonObject car = iterator.next().asJsonObject();
             String id = car.getString("crdb");
+            Matcher matcher = pattern.matcher(id);
+            matcher.find();
+            
             String brand = pattern.split(id)[0];
             brands.add("id_" + brand.toLowerCase());
         }
-        ArrayList<String> result = new ArrayList<>(brands);
+        List<String> result = new ArrayList<>(brands);
         Collections.sort(result);
         return result;
     }

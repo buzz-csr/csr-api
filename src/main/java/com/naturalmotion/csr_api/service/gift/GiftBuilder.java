@@ -1,9 +1,16 @@
 package com.naturalmotion.csr_api.service.gift;
 
+import com.naturalmotion.csr_api.api.CarElement;
+import com.naturalmotion.csr_api.api.FusionColor;
+
 import javax.json.Json;
 import javax.json.JsonObjectBuilder;
 
 public class GiftBuilder {
+
+    public JsonObjectBuilder buildFusion(String id, String brand, CarElement element, FusionColor color, int amount) {
+        return build(id, 13, brand, element.getPartType(), color.getGrade(), amount);
+    }
 
     public JsonObjectBuilder buildEssence(String id) {
         return build(id, 10, "", 7, 0, 2000);

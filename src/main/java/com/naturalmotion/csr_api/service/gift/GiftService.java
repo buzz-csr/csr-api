@@ -11,7 +11,7 @@ public interface GiftService {
 
     JsonObject addEssence() throws CarException, NsbException;
 
-    JsonObject addFusions(List<FusionColor> colors, List<String> brands);
+    JsonObject addFusions(List<FusionColor> colors, List<String> brands) throws NsbException;
 
     JsonObject addEliteToken();
 
