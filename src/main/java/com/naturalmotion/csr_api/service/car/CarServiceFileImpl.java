@@ -1,9 +1,6 @@
 package com.naturalmotion.csr_api.service.car;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map.Entry;
@@ -140,7 +137,7 @@ public class CarServiceFileImpl implements CarService {
     }
 
     @Override
-    public void add(String newCarPath) throws CarException, NsbException {
+    public JsonObject add(String newCarPath) throws CarException, NsbException {
         File nsb = nsbReader.getNsbFile(path);
         JsonObject nsbObject = nsbReader.readJsonObject(nsb);
 
@@ -159,6 +156,7 @@ public class CarServiceFileImpl implements CarService {
         copyNsbObject.add("ncui", ++carId);
 
         nsbWriter.writeNsb(nsb, copyNsbObject);
+        return newCarFull;
     }
 
     private JsonObject createNewCarFull(int carId, String newCarPath) throws CarException {
@@ -203,7 +201,7 @@ public class CarServiceFileImpl implements CarService {
     private JsonObject getCarFull(String searchId) throws IOException {
         JsonObject carFull = null;
         try (InputStream fis = this.getClass().getClassLoader().getResourceAsStream("nsb.full.txt");
-             JsonReader reader = Json.createReader(fis);) {
+                JsonReader reader = Json.createReader(fis);) {
             JsonObject json = reader.readObject();
             JsonArray carList = json.getJsonArray(CAOW);
             int pos = 0;
@@ -218,5 +216,30 @@ public class CarServiceFileImpl implements CarService {
             }
         }
         return carFull;
+    }
+
+    @Override
+    public JsonObject elite(int id) throws CarException, NsbException {
+        File nsb = nsbReader.getNsbFile(path);
+        JsonObject nsbObject = nsbReader.readJsonObject(nsb);
+        JsonArray caowObject = nsbObject.getJsonArray(CAOW);
+        JsonObject jsonCarToUpdate = findCarFromId(id, caowObject);
+        JsonObjectBuilder carBuilder = Json.createObjectBuilder();
+
+        JsonObject newCar = null;
+        if (jsonCarToUpdate != null) {
+            for (Entry<String, JsonValue> entry : jsonCarToUpdate.entrySet()) {
+                carBuilder.add(entry.getKey(), entry.getValue());
+            }
+            carBuilder.add("elcl", 2);
+
+            newCar = carBuilder.build();
+            JsonArrayBuilder newCaow = createNewCaow(id, caowObject, newCar);
+            JsonObjectBuilder newNsb = jsonCopy.copyObject(nsbObject);
+            newNsb.add(CAOW, newCaow);
+            nsbWriter.writeNsb(nsb, newNsb);
+        }
+
+        return newCar;
     }
 }
