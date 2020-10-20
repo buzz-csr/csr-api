@@ -22,7 +22,7 @@ public class ProfileReaderFileImpl implements ProfileReader {
 
     private NsbReader nsbReader = new NsbReader();
 
-    private Pattern pattern = Pattern.compile("(.*)_(.*)");
+    private Pattern pattern = Pattern.compile("^(.*?)_");
 
     private String path;
 
@@ -70,10 +70,11 @@ public class ProfileReaderFileImpl implements ProfileReader {
             JsonObject car = iterator.next().asJsonObject();
             String id = car.getString("crdb");
             Matcher matcher = pattern.matcher(id);
-            matcher.find();
-            
-            String brand = pattern.split(id)[0];
-            brands.add("id_" + brand.toLowerCase());
+            if(matcher.find()){
+                String brand = matcher.group(1);
+                brands.add("id_" + brand.toLowerCase());
+            }
+
         }
         List<String> result = new ArrayList<>(brands);
         Collections.sort(result);

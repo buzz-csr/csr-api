@@ -1,16 +1,13 @@
 package com.naturalmotion.csr_api.service.gift;
 
-<<<<<<< HEAD
-import com.naturalmotion.csr_api.api.CarElement;
-import com.naturalmotion.csr_api.api.FusionColor;
-=======
-import java.math.BigDecimal;
->>>>>>> dcacf0fcbdb5611773f2468740a453ba0362ec32
-
 import javax.json.Json;
 import javax.json.JsonObjectBuilder;
 
+import com.naturalmotion.csr_api.api.CarElement;
 import com.naturalmotion.csr_api.api.EliteToken;
+import com.naturalmotion.csr_api.api.FusionColor;
+
+import java.math.BigDecimal;
 
 public class GiftBuilder {
 

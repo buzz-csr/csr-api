@@ -1,6 +1,8 @@
 package com.naturalmotion.csr_api.service.gift;
 
 import com.naturalmotion.csr_api.api.CarElement;
+
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
