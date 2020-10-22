@@ -50,6 +50,8 @@ public class CarServiceFileImpl implements CarService {
         JsonArrayBuilder newCaow = createNewCaow(idToReplace, caowObject, newCarFull);
         JsonObjectBuilder newNsb = jsonCopy.copyObject(nsbObject);
         newNsb.add(CAOW, newCaow);
+        newNsb.add("cidc", new CidcUpdater().update(newCarFull.getString("crdb"), nsbObject));
+        newNsb.add("cid2", new Cid2Updater().update(newCarFull.getString("crdb"), nsbObject));
 
         nsbWriter.writeNsb(nsb, newNsb);
         return newCarFull;
@@ -154,6 +156,8 @@ public class CarServiceFileImpl implements CarService {
         copyNsbObject.add(CAOW, caow);
         copyNsbObject.add("cgpi", cgpiNew);
         copyNsbObject.add("ncui", ++carId);
+        copyNsbObject.add("cidc", new CidcUpdater().update(newCarFull.getString("crdb"), nsbObject));
+        copyNsbObject.add("cid2", new Cid2Updater().update(newCarFull.getString("crdb"), nsbObject));
 
         nsbWriter.writeNsb(nsb, copyNsbObject);
         return newCarFull;
@@ -164,8 +168,7 @@ public class CarServiceFileImpl implements CarService {
             JsonObject carJson = new HttpFileReader().readJson(newCarPath);
             JsonObject carFull = getCarFull(carJson.getString(CRDB));
             return mergeFusion(carJson, carFull, carId);
-        } catch (HttpCsrExcetion
-                | IOException e) {
+        } catch (HttpCsrExcetion | NsbException e) {
             throw new CarException(e);
         }
     }
@@ -198,22 +201,19 @@ public class CarServiceFileImpl implements CarService {
         return objectBuilder.build();
     }
 
-    private JsonObject getCarFull(String searchId) throws IOException {
+    private JsonObject getCarFull(String searchId) throws NsbException {
         JsonObject carFull = null;
-        try (InputStream fis = this.getClass().getClassLoader().getResourceAsStream("nsb.full.txt");
-                JsonReader reader = Json.createReader(fis);) {
-            JsonObject json = reader.readObject();
-            JsonArray carList = json.getJsonArray(CAOW);
-            int pos = 0;
-            while (carFull == null && pos < carList.size()) {
-                JsonObject carTemp = carList.getJsonObject(pos);
-                String id = carTemp.getString(CRDB);
+        JsonObject json = nsbReader.getNsbFull();
+        JsonArray carList = json.getJsonArray(CAOW);
+        int pos = 0;
+        while (carFull == null && pos < carList.size()) {
+            JsonObject carTemp = carList.getJsonObject(pos);
+            String id = carTemp.getString(CRDB);
 
-                if (id.equals(searchId)) {
-                    carFull = carTemp;
-                }
-                pos++;
+            if (id.equals(searchId)) {
+                carFull = carTemp;
             }
+            pos++;
         }
         return carFull;
     }
