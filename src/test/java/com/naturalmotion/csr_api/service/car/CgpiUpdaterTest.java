@@ -14,15 +14,15 @@ public class CgpiUpdaterTest {
 
     @Test
     public void updateGarageNotFull() {
-        JsonArrayBuilder cgpi = Json.createArrayBuilder(Arrays.asList(1, -1, -1, -1, -1, -1));
+        JsonArrayBuilder cgpi = Json.createArrayBuilder(Arrays.asList(0, -1, -1, -1, -1, -1));
         JsonArrayBuilder update = updater.update(cgpi.build(), 1);
-        Assertions.assertThat(update.build().toString()).isEqualTo("[1,2,-1,-1,-1,-1]");
+        Assertions.assertThat(update.build().toString()).isEqualTo("[0,1,-1,-1,-1,-1]");
     }
 
     @Test
     public void updateGarageFull() {
-        JsonArrayBuilder cgpi = Json.createArrayBuilder(Arrays.asList(1, 2, 3, 4, 5, 6));
+        JsonArrayBuilder cgpi = Json.createArrayBuilder(Arrays.asList(0, 2, 3, 4, 5, 1));
         JsonArrayBuilder update = updater.update(cgpi.build(), 6);
-        Assertions.assertThat(update.build().toString()).isEqualTo("[1,2,3,4,5,6,7,-1,-1,-1,-1,-1]");
+        Assertions.assertThat(update.build().toString()).isEqualTo("[0,2,3,4,5,1,6,-1,-1,-1,-1,-1]");
     }
 }

@@ -9,14 +9,14 @@ public class CgpiUpdater {
     public JsonArrayBuilder update(JsonArray cgpi, int size) {
         JsonArrayBuilder cgpiBuilder = Json.createArrayBuilder(cgpi);
         if (isLastGarageFull(cgpi)) {
-            cgpiBuilder.add(size + 1);
+            cgpiBuilder.add(size);
             cgpiBuilder.add(-1);
             cgpiBuilder.add(-1);
             cgpiBuilder.add(-1);
             cgpiBuilder.add(-1);
             cgpiBuilder.add(-1);
         } else {
-            cgpiBuilder.set(size, size + 1);
+            cgpiBuilder.set(size, size);
         }
         return cgpiBuilder;
     }
