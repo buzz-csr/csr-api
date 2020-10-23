@@ -1,9 +1,8 @@
 package com.naturalmotion.csr_api.service.gift;
 
-import com.naturalmotion.csr_api.api.CarElement;
-
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.json.Json;
@@ -12,26 +11,23 @@ import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 
+import com.naturalmotion.csr_api.api.CarElement;
 import com.naturalmotion.csr_api.api.EliteTokenParam;
-import com.naturalmotion.csr_api.api.FusionColor;
 import com.naturalmotion.csr_api.api.FusionParam;
-import com.naturalmotion.csr_api.service.io.JsonCopy;
+import com.naturalmotion.csr_api.service.io.JsonBuilder;
 import com.naturalmotion.csr_api.service.io.NsbException;
 import com.naturalmotion.csr_api.service.io.NsbReader;
-import com.naturalmotion.csr_api.service.io.NsbWriter;
-
-import java.util.ArrayList;
-import java.util.Arrays;
+import com.naturalmotion.csr_api.service.io.ProfileFileWriter;
 
 public class GiftServiceFileImpl implements GiftService {
 
-    private NsbWriter nsbWriter = new NsbWriter();
+    private ProfileFileWriter nsbWriter = new ProfileFileWriter();
 
     private NsbReader nsbReader = new NsbReader();
 
-    private JsonCopy jsonCopy = new JsonCopy();
-
     private GiftBuilder builder = new GiftBuilder();
+
+    private JsonBuilder jsonBuilder = new JsonBuilder();
 
     private final String path;
 
@@ -44,10 +40,10 @@ public class GiftServiceFileImpl implements GiftService {
         JsonObjectBuilder gift = builder.buildEssence("0_0");
 
         File nsb = nsbReader.getNsbFile(path);
-        JsonObject nsbObject = nsbReader.readJsonObject(nsb);
+        JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
 
         JsonObjectBuilder newNsb = addGift(Arrays.asList(gift), nsbObject);
-        nsbWriter.writeNsb(nsb, newNsb);
+        nsbWriter.write(nsb, newNsb);
         return newNsb.build();
     }
 
@@ -65,10 +61,10 @@ public class GiftServiceFileImpl implements GiftService {
         }
 
         File nsb = nsbReader.getNsbFile(path);
-        JsonObject nsbObject = nsbReader.readJsonObject(nsb);
+        JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
 
         JsonObjectBuilder newNsb = addGift(gifts, nsbObject);
-        nsbWriter.writeNsb(nsb, newNsb);
+        nsbWriter.write(nsb, newNsb);
         return newNsb.build();
     }
 
@@ -80,10 +76,10 @@ public class GiftServiceFileImpl implements GiftService {
         }
 
         File nsb = nsbReader.getNsbFile(path);
-        JsonObject nsbObject = nsbReader.readJsonObject(nsb);
+        JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
 
         JsonObjectBuilder newNsb = addGift(gifts, nsbObject);
-        nsbWriter.writeNsb(nsb, newNsb);
+        nsbWriter.write(nsb, newNsb);
         return newNsb.build();
     }
 
@@ -93,7 +89,7 @@ public class GiftServiceFileImpl implements GiftService {
     }
 
     private JsonObjectBuilder addGift(List<JsonObjectBuilder> gifts, JsonObject nsbObject) {
-        JsonObjectBuilder newNsb = jsonCopy.copyObject(nsbObject);
+        JsonObjectBuilder newNsb = Json.createObjectBuilder(nsbObject);
 
         JsonArray picl = nsbObject.getJsonArray("picl");
         JsonArrayBuilder piclBuilder = Json.createArrayBuilder(picl);

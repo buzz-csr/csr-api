@@ -13,4 +13,6 @@ public interface CarService {
     public JsonObject add(String newCarPath) throws CarException, NsbException;
 
     public JsonObject elite(int id) throws CarException, NsbException;
+
+    public JsonObject removeEliteLevel() throws NsbException;
 }

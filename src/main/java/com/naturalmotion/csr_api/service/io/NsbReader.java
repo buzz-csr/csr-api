@@ -1,11 +1,12 @@
 package com.naturalmotion.csr_api.service.io;
 
-import com.naturalmotion.csr_api.service.car.CarException;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
-import java.io.*;
 
 public class NsbReader {
 
@@ -21,21 +22,11 @@ public class NsbReader {
         return nsb;
     }
 
-    public JsonObject readJsonObject(File nsb) throws NsbException {
-        JsonObject nsbObject = null;
-        try (JsonReader reader = Json.createReader(new FileInputStream(nsb));) {
-            nsbObject = reader.readObject();
-        } catch (FileNotFoundException e) {
-            throw new NsbException(e);
-        }
-        return nsbObject;
-    }
-
     public JsonObject getNsbFull() throws NsbException {
         JsonObject json = null;
 
         try (InputStream fis = this.getClass().getClassLoader().getResourceAsStream("nsb.full.txt");
-             JsonReader reader = Json.createReader(fis);) {
+                JsonReader reader = Json.createReader(fis);) {
             json = reader.readObject();
         } catch (IOException e) {
             throw new NsbException(e);

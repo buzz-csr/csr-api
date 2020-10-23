@@ -1,8 +1,6 @@
 package com.naturalmotion.csr_api.service.car;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Map.Entry;
 
 import javax.json.Json;
@@ -10,17 +8,20 @@ import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
-import javax.json.JsonReader;
 import javax.json.JsonValue;
 
 import com.naturalmotion.csr_api.service.http.HttpCsrExcetion;
 import com.naturalmotion.csr_api.service.http.HttpFileReader;
-import com.naturalmotion.csr_api.service.io.JsonCopy;
+import com.naturalmotion.csr_api.service.io.JsonBuilder;
 import com.naturalmotion.csr_api.service.io.NsbException;
 import com.naturalmotion.csr_api.service.io.NsbReader;
-import com.naturalmotion.csr_api.service.io.NsbWriter;
+import com.naturalmotion.csr_api.service.io.ProfileFileWriter;
 
 public class CarServiceFileImpl implements CarService {
+
+    private static final String CMLV = "cmlv";
+
+    private static final String ELCL = "elcl";
 
     private static final String CAOW = "caow";
 
@@ -30,11 +31,11 @@ public class CarServiceFileImpl implements CarService {
 
     private final String path;
 
-    private NsbWriter nsbWriter = new NsbWriter();
+    private ProfileFileWriter fileWriter = new ProfileFileWriter();
 
     private NsbReader nsbReader = new NsbReader();
 
-    private JsonCopy jsonCopy = new JsonCopy();
+    private JsonBuilder jsonBuilder = new JsonBuilder();
 
     public CarServiceFileImpl(String path) {
         this.path = path;
@@ -45,15 +46,15 @@ public class CarServiceFileImpl implements CarService {
         JsonObject newCarFull = createNewCarFull(idToReplace, newCarPath);
 
         File nsb = nsbReader.getNsbFile(path);
-        JsonObject nsbObject = nsbReader.readJsonObject(nsb);
+        JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
         JsonArray caowObject = nsbObject.getJsonArray(CAOW);
         JsonArrayBuilder newCaow = createNewCaow(idToReplace, caowObject, newCarFull);
-        JsonObjectBuilder newNsb = jsonCopy.copyObject(nsbObject);
+        JsonObjectBuilder newNsb = Json.createObjectBuilder(nsbObject);
         newNsb.add(CAOW, newCaow);
         newNsb.add("cidc", new CidcUpdater().update(newCarFull.getString("crdb"), nsbObject));
         newNsb.add("cid2", new Cid2Updater().update(newCarFull.getString("crdb"), nsbObject));
 
-        nsbWriter.writeNsb(nsb, newNsb);
+        fileWriter.write(nsb, newNsb);
         return newCarFull;
     }
 
@@ -62,7 +63,7 @@ public class CarServiceFileImpl implements CarService {
         JsonObject carFull = null;
 
         File nsb = nsbReader.getNsbFile(path);
-        JsonObject nsbObject = nsbReader.readJsonObject(nsb);
+        JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
         JsonArray caowObject = nsbObject.getJsonArray(CAOW);
         JsonObject jsonCarToMax = findCarFromId(id, caowObject);
 
@@ -74,9 +75,9 @@ public class CarServiceFileImpl implements CarService {
                 JsonObject newCarFull = mergeFusion(jsonCarToMax, jsonCarFull, id);
 
                 JsonArrayBuilder newCaow = createNewCaow(id, caowObject, newCarFull);
-                JsonObjectBuilder newNsb = jsonCopy.copyObject(nsbObject);
+                JsonObjectBuilder newNsb = Json.createObjectBuilder(nsbObject);
                 newNsb.add(CAOW, newCaow);
-                nsbWriter.writeNsb(nsb, newNsb);
+                fileWriter.write(nsb, newNsb);
 
                 carFull = newCarFull.asJsonObject();
             } else {
@@ -141,7 +142,7 @@ public class CarServiceFileImpl implements CarService {
     @Override
     public JsonObject add(String newCarPath) throws CarException, NsbException {
         File nsb = nsbReader.getNsbFile(path);
-        JsonObject nsbObject = nsbReader.readJsonObject(nsb);
+        JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
 
         JsonArray caowObject = nsbObject.getJsonArray(CAOW);
         JsonArrayBuilder cgpiNew = getCgpiNew(nsbObject, caowObject);
@@ -152,14 +153,14 @@ public class CarServiceFileImpl implements CarService {
         JsonArrayBuilder caow = Json.createArrayBuilder(caowObject);
         caow.add(newCarFull);
 
-        JsonObjectBuilder copyNsbObject = jsonCopy.copyObject(nsbObject);
+        JsonObjectBuilder copyNsbObject = Json.createObjectBuilder(nsbObject);
         copyNsbObject.add(CAOW, caow);
         copyNsbObject.add("cgpi", cgpiNew);
         copyNsbObject.add("ncui", ++carId);
         copyNsbObject.add("cidc", new CidcUpdater().update(newCarFull.getString("crdb"), nsbObject));
         copyNsbObject.add("cid2", new Cid2Updater().update(newCarFull.getString("crdb"), nsbObject));
 
-        nsbWriter.writeNsb(nsb, copyNsbObject);
+        fileWriter.write(nsb, copyNsbObject);
         return newCarFull;
     }
 
@@ -168,7 +169,8 @@ public class CarServiceFileImpl implements CarService {
             JsonObject carJson = new HttpFileReader().readJson(newCarPath);
             JsonObject carFull = getCarFull(carJson.getString(CRDB));
             return mergeFusion(carJson, carFull, carId);
-        } catch (HttpCsrExcetion | NsbException e) {
+        } catch (HttpCsrExcetion
+                | NsbException e) {
             throw new CarException(e);
         }
     }
@@ -180,7 +182,7 @@ public class CarServiceFileImpl implements CarService {
     }
 
     private JsonObject mergeFusion(JsonObject carJson, JsonObject carFull, int carId) {
-        JsonObjectBuilder objectBuilder = jsonCopy.copyObject(carJson);
+        JsonObjectBuilder objectBuilder = Json.createObjectBuilder(carJson);
         objectBuilder.add(UNID, carId);
 
         JsonArrayBuilder upst = Json.createArrayBuilder(carFull.getJsonArray("upst"));
@@ -221,7 +223,7 @@ public class CarServiceFileImpl implements CarService {
     @Override
     public JsonObject elite(int id) throws CarException, NsbException {
         File nsb = nsbReader.getNsbFile(path);
-        JsonObject nsbObject = nsbReader.readJsonObject(nsb);
+        JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
         JsonArray caowObject = nsbObject.getJsonArray(CAOW);
         JsonObject jsonCarToUpdate = findCarFromId(id, caowObject);
         JsonObjectBuilder carBuilder = Json.createObjectBuilder();
@@ -231,15 +233,43 @@ public class CarServiceFileImpl implements CarService {
             for (Entry<String, JsonValue> entry : jsonCarToUpdate.entrySet()) {
                 carBuilder.add(entry.getKey(), entry.getValue());
             }
-            carBuilder.add("elcl", 2);
+            carBuilder.add(ELCL, 2);
 
             newCar = carBuilder.build();
             JsonArrayBuilder newCaow = createNewCaow(id, caowObject, newCar);
-            JsonObjectBuilder newNsb = jsonCopy.copyObject(nsbObject);
+            JsonObjectBuilder newNsb = Json.createObjectBuilder(nsbObject);
             newNsb.add(CAOW, newCaow);
-            nsbWriter.writeNsb(nsb, newNsb);
+            fileWriter.write(nsb, newNsb);
         }
 
         return newCar;
+    }
+
+    @Override
+    public JsonObject removeEliteLevel() throws NsbException {
+        File nsb = nsbReader.getNsbFile(path);
+        JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
+        JsonArray caowObject = nsbObject.getJsonArray(CAOW);
+        JsonArrayBuilder caowBuilder = Json.createArrayBuilder();
+
+        for (int index = 0; index < caowObject.size(); index++) {
+            JsonObject jsonCar = caowObject.getJsonObject(index);
+            if (jsonCar.getInt(CMLV) > 0) {
+                JsonObject carFull = getCarFull(jsonCar.getString(CRDB));
+                JsonObjectBuilder newJsonCar = Json.createObjectBuilder(jsonCar);
+                newJsonCar.add(CMLV, 0);
+                if (carFull != null) {
+                    caowBuilder.add(mergeFusion(newJsonCar.build(), carFull, jsonCar.getInt(UNID)));
+                }
+            } else {
+                caowBuilder.add(jsonCar);
+            }
+        }
+        JsonObjectBuilder nsbBuilder = Json.createObjectBuilder(nsbObject);
+        nsbBuilder.add(CAOW, caowBuilder);
+
+        JsonObject result = nsbBuilder.build();
+        fileWriter.write(nsb, result);
+        return result;
     }
 }
