@@ -14,6 +14,7 @@ import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
 
 import com.naturalmotion.csr_api.Configuration;
+import com.naturalmotion.csr_api.api.EliteTokenParam;
 import com.naturalmotion.csr_api.api.Resource;
 import com.naturalmotion.csr_api.api.ResourceType;
 import com.naturalmotion.csr_api.service.io.JsonBuilder;
@@ -116,9 +117,10 @@ public class ProfileUpdaterFileImpl implements ProfileUpdater {
     }
 
     @Override
-    public void deban() throws NsbException {
-        cleanNsb();
+    public JsonObject deban() throws NsbException {
+        JsonObject spent = cleanNsb();
         cleanScb();
+        return spent;
     }
 
     private void cleanScb() throws NsbException {
@@ -138,7 +140,7 @@ public class ProfileUpdaterFileImpl implements ProfileUpdater {
         fileWriter.write(scb, scbBuilder);
     }
 
-    private void cleanNsb() throws NsbException {
+    private JsonObject cleanNsb() throws NsbException {
         File nsb = nsbReader.getNsbFile(path);
         JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
         JsonObjectBuilder newNsbObject = Json.createObjectBuilder(nsbObject);
@@ -159,6 +161,42 @@ public class ProfileUpdaterFileImpl implements ProfileUpdater {
         eliteTokenSpent.add("Yellow", 0);
         newNsbObject.add(ELITE_TOKEN_SPENT, eliteTokenSpent);
         fileWriter.write(nsb, newNsbObject);
+
+        return nsbObject.getJsonObject(ELITE_TOKEN_SPENT);
+    }
+
+    @Override
+    public void updateResourceAfterBan(List<EliteTokenParam> tokens)
+            throws UpdaterException, NsbException, IOException {
+        Configuration configuration = new Configuration();
+
+        updateNsb(tokens, configuration);
+        updateScb(tokens, configuration);
+    }
+
+    public void updateScb(List<EliteTokenParam> tokens, Configuration configuration) throws NsbException {
+        File scb = scbReader.getScbFile(path);
+        JsonObject scbObject = jsonBuilder.readJsonObject(scb);
+        JsonObjectBuilder newScbBuilder = Json.createObjectBuilder(scbObject);
+        for (EliteTokenParam token : tokens) {
+            String jsonKey = configuration.getString(token.getToken().name() + ".scb.earned");
+            newScbBuilder.add(jsonKey, token.getAmount().intValue());
+        }
+        fileWriter.write(scb, newScbBuilder);
+    }
+
+    public void updateNsb(List<EliteTokenParam> tokens, Configuration configuration) throws NsbException {
+        File nsb = nsbReader.getNsbFile(path);
+        JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
+        JsonObjectBuilder tokenBuilder = Json.createObjectBuilder();
+        for (EliteTokenParam token : tokens) {
+            String jsonKey = configuration.getString(token.getToken().name() + ".nsb.earned");
+            tokenBuilder.add(jsonKey, token.getAmount().intValue());
+        }
+
+        JsonObjectBuilder newNsbBuilder = Json.createObjectBuilder(nsbObject);
+        newNsbBuilder.add(ELITE_TOKEN_EARNED, tokenBuilder);
+        fileWriter.write(nsb, newNsbBuilder);
     }
 
 }
