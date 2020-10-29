@@ -167,35 +167,43 @@ public class ProfileUpdaterFileImpl implements ProfileUpdater {
 
     @Override
     public void updateResourceAfterBan(List<EliteTokenParam> tokens)
-            throws UpdaterException, NsbException, IOException {
+            throws NsbException, IOException {
         Configuration configuration = new Configuration();
 
-        updateNsb(tokens, configuration);
-        updateScb(tokens, configuration);
+        updateNsb(tokens, configuration, "earned", ELITE_TOKEN_EARNED);
+        updateScb(tokens, configuration, "earned");
     }
 
-    public void updateScb(List<EliteTokenParam> tokens, Configuration configuration) throws NsbException {
+    @Override
+    public void updateEliteTokens(List<EliteTokenParam> tokens) throws NsbException, IOException {
+        Configuration configuration = new Configuration();
+
+        updateNsb(tokens, configuration, "spent", ELITE_TOKEN_SPENT);
+        updateScb(tokens, configuration, "spent");
+    }
+
+    public void updateScb(List<EliteTokenParam> tokens, Configuration configuration, String way) throws NsbException {
         File scb = scbReader.getScbFile(path);
         JsonObject scbObject = jsonBuilder.readJsonObject(scb);
         JsonObjectBuilder newScbBuilder = Json.createObjectBuilder(scbObject);
         for (EliteTokenParam token : tokens) {
-            String jsonKey = configuration.getString(token.getToken().name() + ".scb.earned");
+            String jsonKey = configuration.getString(token.getToken().name() + ".scb." + way);
             newScbBuilder.add(jsonKey, token.getAmount().intValue());
         }
         fileWriter.write(scb, newScbBuilder);
     }
 
-    public void updateNsb(List<EliteTokenParam> tokens, Configuration configuration) throws NsbException {
+    public void updateNsb(List<EliteTokenParam> tokens, Configuration configuration, String way, String node) throws NsbException {
         File nsb = nsbReader.getNsbFile(path);
         JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
         JsonObjectBuilder tokenBuilder = Json.createObjectBuilder();
         for (EliteTokenParam token : tokens) {
-            String jsonKey = configuration.getString(token.getToken().name() + ".nsb.earned");
+            String jsonKey = configuration.getString(token.getToken().name() + ".nsb." + way);
             tokenBuilder.add(jsonKey, token.getAmount().intValue());
         }
 
         JsonObjectBuilder newNsbBuilder = Json.createObjectBuilder(nsbObject);
-        newNsbBuilder.add(ELITE_TOKEN_EARNED, tokenBuilder);
+        newNsbBuilder.add(node, tokenBuilder);
         fileWriter.write(nsb, newNsbBuilder);
     }
 

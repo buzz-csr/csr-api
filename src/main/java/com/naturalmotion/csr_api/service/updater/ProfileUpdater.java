@@ -17,4 +17,6 @@ public interface ProfileUpdater {
     public JsonObject deban() throws NsbException;
 
     void updateResourceAfterBan(List<EliteTokenParam> tokens) throws UpdaterException, NsbException, IOException;
+
+    void updateEliteTokens(List<EliteTokenParam> tokens) throws UpdaterException, NsbException, IOException;
 }

@@ -51,6 +51,10 @@ public class ProfileReaderFileImpl implements ProfileReader {
             resources.add(createResource(ResourceType.BRONZE_KEY, personObject, conf));
             resources.add(createResource(ResourceType.SILVER_KEY, personObject, conf));
             resources.add(createResource(ResourceType.GOLD_KEY, personObject, conf));
+            resources.add(createResource(ResourceType.GREEN, personObject, conf));
+            resources.add(createResource(ResourceType.BLUE, personObject, conf));
+            resources.add(createResource(ResourceType.RED, personObject, conf));
+            resources.add(createResource(ResourceType.YELLOW, personObject, conf));
 
         } catch (IOException e) {
             throw new ReaderException("Error reading file", e);
