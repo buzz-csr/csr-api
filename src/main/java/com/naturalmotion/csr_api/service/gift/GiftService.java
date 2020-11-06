@@ -1,5 +1,6 @@
 package com.naturalmotion.csr_api.service.gift;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import javax.json.JsonObject;
@@ -18,6 +19,6 @@ public interface GiftService {
 
     JsonObject addEliteToken(List<EliteTokenParam> tokenParam) throws NsbException;
 
-    JsonObject addRestorationToken(String carId);
+    JsonObject addRestorationToken(String carId, BigDecimal amount) throws NsbException;
 
 }

@@ -1,6 +1,7 @@
 package com.naturalmotion.csr_api.service.gift;
 
 import java.io.File;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -84,8 +85,16 @@ public class GiftServiceFileImpl implements GiftService {
     }
 
     @Override
-    public JsonObject addRestorationToken(String carId) {
-        return null;
+    public JsonObject addRestorationToken(String carId, BigDecimal amount) throws NsbException {
+        List<JsonObjectBuilder> gifts = new ArrayList<>();
+        gifts.add(builder.buildRestorationToken(carId, amount));
+
+        File nsb = nsbReader.getNsbFile(path);
+        JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
+
+        JsonObjectBuilder newNsb = addGift(gifts, nsbObject);
+        nsbWriter.write(nsb, newNsb);
+        return newNsb.build();
     }
 
     private JsonObjectBuilder addGift(List<JsonObjectBuilder> gifts, JsonObject nsbObject) {

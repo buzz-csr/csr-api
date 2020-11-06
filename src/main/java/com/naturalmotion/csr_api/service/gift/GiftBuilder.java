@@ -23,6 +23,10 @@ public class GiftBuilder {
         return build("1592077438_24_0", 24, "", 7, token.getGrade(), amount.intValue());
     }
 
+    public JsonObjectBuilder buildRestorationToken(String carId, BigDecimal amount) {
+        return build("0_1", 22, carId, 7, 0, amount.intValue());
+    }
+
     private JsonObjectBuilder build(String id, int type, String name, int part, int grade, int amount) {
         JsonObjectBuilder gift = Json.createObjectBuilder();
 
