@@ -21,6 +21,6 @@ public class ProfileReaderFileImplTest {
     public void testGetBrands() throws NsbException {
         ProfileReaderFileImpl reader = new ProfileReaderFileImpl("src/test/resources");
         List<String> brands = reader.getBrands();
-        Assertions.assertThat(brands).hasSize(62);
+        Assertions.assertThat(brands).hasSize(61);
     }
 }

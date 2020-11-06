@@ -24,6 +24,8 @@ public class ProfileReaderFileImpl implements ProfileReader {
 
     private Pattern pattern = Pattern.compile("^(.*?)_");
 
+    private Pattern patternMercedes = Pattern.compile("Mercedes.*");
+
     private String path;
 
     public ProfileReaderFileImpl(String path) {
@@ -76,10 +78,12 @@ public class ProfileReaderFileImpl implements ProfileReader {
             Matcher matcher = pattern.matcher(id);
             if(matcher.find()){
                 String brand = matcher.group(1);
-                brands.add("id_" + brand.toLowerCase());
+                if(!patternMercedes.matcher(brand).matches()){
+                    brands.add("id_" + brand.toLowerCase());
+                }
             }
-
         }
+        brands.add("id_mercedes"); // Ne peut être déterminé automatiquement
         List<String> result = new ArrayList<>(brands);
         Collections.sort(result);
         return result;
