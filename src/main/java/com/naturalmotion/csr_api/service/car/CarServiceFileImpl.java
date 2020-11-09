@@ -1,7 +1,10 @@
 package com.naturalmotion.csr_api.service.car;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -10,6 +13,7 @@ import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonValue;
 
+import com.naturalmotion.csr_api.service.car.comparator.CarComparator;
 import com.naturalmotion.csr_api.service.http.HttpCsrExcetion;
 import com.naturalmotion.csr_api.service.http.HttpFileReader;
 import com.naturalmotion.csr_api.service.io.JsonBuilder;
@@ -267,6 +271,28 @@ public class CarServiceFileImpl implements CarService {
         }
         JsonObjectBuilder nsbBuilder = Json.createObjectBuilder(nsbObject);
         nsbBuilder.add(CAOW, caowBuilder);
+
+        JsonObject result = nsbBuilder.build();
+        fileWriter.write(nsb, result);
+        return result;
+    }
+
+    @Override
+    public JsonObject sort() throws NsbException {
+        File nsb = nsbReader.getNsbFile(path);
+        JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
+        JsonArray cgpiObject = nsbObject.getJsonArray("cgpi");
+        List<Integer> caowList = new ArrayList<>();
+        for (int i = 0; i < cgpiObject.size(); i++) {
+            caowList.add(cgpiObject.getInt(i));
+        }
+        caowList.sort(new CarComparator(nsbObject.getJsonArray(CAOW)));
+
+        JsonArrayBuilder cgpiBuilder = Json.createArrayBuilder();
+        caowList.forEach(x -> cgpiBuilder.add(x));
+
+        JsonObjectBuilder nsbBuilder = Json.createObjectBuilder(nsbObject);
+        nsbBuilder.add("cgpi", cgpiBuilder);
 
         JsonObject result = nsbBuilder.build();
         fileWriter.write(nsb, result);
