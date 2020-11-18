@@ -14,7 +14,7 @@ public class ProfileReaderFileImplTest {
     public void testGetResources() throws Exception {
         ProfileReaderFileImpl reader = new ProfileReaderFileImpl("src/test/resources");
         List<Resource> resources = reader.getResources();
-        Assertions.assertThat(resources).hasSize(5);
+        Assertions.assertThat(resources).hasSize(9);
     }
 
     @Test
