@@ -22,96 +22,111 @@ import com.naturalmotion.csr_api.service.io.ProfileFileWriter;
 
 public class GiftServiceFileImpl implements GiftService {
 
-    private ProfileFileWriter nsbWriter = new ProfileFileWriter();
+	private ProfileFileWriter nsbWriter = new ProfileFileWriter();
 
-    private NsbReader nsbReader = new NsbReader();
+	private NsbReader nsbReader = new NsbReader();
 
-    private GiftBuilder builder = new GiftBuilder();
+	private GiftBuilder builder = new GiftBuilder();
 
-    private JsonBuilder jsonBuilder = new JsonBuilder();
+	private JsonBuilder jsonBuilder = new JsonBuilder();
 
-    private final String path;
+	private final String path;
 
-    public GiftServiceFileImpl(String path) {
-        this.path = path;
-    }
+	public GiftServiceFileImpl(String path) {
+		this.path = path;
+	}
 
-    @Override
-    public JsonObject addEssence() throws NsbException {
-        JsonObjectBuilder gift = builder.buildEssence("0_0");
+	@Override
+	public JsonObject addEssence() throws NsbException {
+		JsonObjectBuilder gift = builder.buildEssence("0_0");
 
-        File nsb = nsbReader.getNsbFile(path);
-        JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
+		File nsb = nsbReader.getNsbFile(path);
+		JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
 
-        JsonObjectBuilder newNsb = addGift(Arrays.asList(gift), nsbObject);
-        nsbWriter.write(nsb, newNsb);
-        return newNsb.build();
-    }
+		JsonObjectBuilder newNsb = addGift(Arrays.asList(gift), nsbObject);
+		nsbWriter.write(nsb, newNsb);
+		return newNsb.build();
+	}
 
-    @Override
-    public JsonObject addFusions(List<FusionParam> colors, List<String> brands) throws NsbException {
-        List<JsonObjectBuilder> gifts = new ArrayList<>();
-        int index = 0;
-        for (String brand : brands) {
-            for (FusionParam fusion : colors) {
-                for (CarElement element : CarElement.values()) {
-                    gifts.add(builder.buildFusion(String.valueOf(index++), brand, element, fusion.getColor(),
-                            fusion.getQuantity()));
-                }
-            }
-        }
+	@Override
+	public JsonObject addFusions(List<FusionParam> colors, List<String> brands) throws NsbException {
+		List<JsonObjectBuilder> gifts = new ArrayList<>();
+		int index = 0;
+		for (String brand : brands) {
+			for (FusionParam fusion : colors) {
+				for (CarElement element : CarElement.values()) {
+					gifts.add(builder.buildFusion(String.valueOf(index++), brand, element, fusion.getColor(),
+							fusion.getQuantity()));
+				}
+			}
+		}
 
-        File nsb = nsbReader.getNsbFile(path);
-        JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
+		File nsb = nsbReader.getNsbFile(path);
+		JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
 
-        JsonObjectBuilder newNsb = addGift(gifts, nsbObject);
-        nsbWriter.write(nsb, newNsb);
-        return newNsb.build();
-    }
+		JsonObjectBuilder newNsb = addGift(gifts, nsbObject);
+		nsbWriter.write(nsb, newNsb);
+		return newNsb.build();
+	}
 
-    @Override
-    public JsonObject addEliteToken(List<EliteTokenParam> tokenParams) throws NsbException {
-        List<JsonObjectBuilder> gifts = new ArrayList<>();
-        for (EliteTokenParam param : tokenParams) {
-            gifts.add(builder.buildEliteToken(param.getToken(), param.getAmount()));
-        }
+	@Override
+	public JsonObject addEliteToken(List<EliteTokenParam> tokenParams) throws NsbException {
+		List<JsonObjectBuilder> gifts = new ArrayList<>();
+		for (EliteTokenParam param : tokenParams) {
+			gifts.add(builder.buildEliteToken(param.getToken(), param.getAmount()));
+		}
 
-        File nsb = nsbReader.getNsbFile(path);
-        JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
+		File nsb = nsbReader.getNsbFile(path);
+		JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
 
-        JsonObjectBuilder newNsb = addGift(gifts, nsbObject);
-        nsbWriter.write(nsb, newNsb);
-        return newNsb.build();
-    }
+		JsonObjectBuilder newNsb = addGift(gifts, nsbObject);
+		nsbWriter.write(nsb, newNsb);
+		return newNsb.build();
+	}
 
-    @Override
-    public JsonObject addRestorationToken(String carId, BigDecimal amount) throws NsbException {
-        List<JsonObjectBuilder> gifts = new ArrayList<>();
-        gifts.add(builder.buildRestorationToken(carId, amount));
+	@Override
+	public JsonObject addRestorationToken(String carId, BigDecimal amount) throws NsbException {
+		List<JsonObjectBuilder> gifts = new ArrayList<>();
+		gifts.add(builder.buildRestorationToken(carId, amount));
 
-        File nsb = nsbReader.getNsbFile(path);
-        JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
+		File nsb = nsbReader.getNsbFile(path);
+		JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
 
-        JsonObjectBuilder newNsb = addGift(gifts, nsbObject);
-        nsbWriter.write(nsb, newNsb);
-        return newNsb.build();
-    }
+		JsonObjectBuilder newNsb = addGift(gifts, nsbObject);
+		nsbWriter.write(nsb, newNsb);
+		return newNsb.build();
+	}
 
-    private JsonObjectBuilder addGift(List<JsonObjectBuilder> gifts, JsonObject nsbObject) {
-        JsonObjectBuilder newNsb = Json.createObjectBuilder(nsbObject);
+	@Override
+	public JsonObject addStage6(String carId) throws NsbException {
+		List<JsonObjectBuilder> gifts = new ArrayList<>();
+		for (int i = 0; i < 7; i++) {
+			gifts.add(builder.buildStage6(carId, i));
+		}
+		File nsb = nsbReader.getNsbFile(path);
+		JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
 
-        JsonArray picl = nsbObject.getJsonArray("picl");
-        JsonArrayBuilder piclBuilder = Json.createArrayBuilder(picl);
-        JsonArray playinbitms = nsbObject.getJsonArray("playinbitms");
-        JsonArrayBuilder itmsBuilder = Json.createArrayBuilder(playinbitms);
+		JsonObjectBuilder newNsb = addGift(gifts, nsbObject);
+		nsbWriter.write(nsb, newNsb);
+		return newNsb.build();
+	}
 
-        for (JsonObjectBuilder gift : gifts) {
-            piclBuilder.add("eRewards");
-            itmsBuilder.add(gift);
-        }
-        newNsb.add("picl", piclBuilder);
-        newNsb.add("playinbitms", itmsBuilder);
+	private JsonObjectBuilder addGift(List<JsonObjectBuilder> gifts, JsonObject nsbObject) {
+		JsonObjectBuilder newNsb = Json.createObjectBuilder(nsbObject);
 
-        return newNsb;
-    }
+		JsonArray picl = nsbObject.getJsonArray("picl");
+		JsonArrayBuilder piclBuilder = Json.createArrayBuilder(picl);
+		JsonArray playinbitms = nsbObject.getJsonArray("playinbitms");
+		JsonArrayBuilder itmsBuilder = Json.createArrayBuilder(playinbitms);
+
+		for (JsonObjectBuilder gift : gifts) {
+			piclBuilder.add("eRewards");
+			itmsBuilder.add(gift);
+		}
+		newNsb.add("picl", piclBuilder);
+		newNsb.add("playinbitms", itmsBuilder);
+
+		return newNsb;
+	}
+
 }
