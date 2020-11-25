@@ -37,8 +37,8 @@ public class GiftServiceFileImpl implements GiftService {
 	}
 
 	@Override
-	public JsonObject addEssence() throws NsbException {
-		JsonObjectBuilder gift = builder.buildEssence("0_0");
+	public JsonObject addEssence(BigDecimal qty) throws NsbException {
+		JsonObjectBuilder gift = builder.buildEssence("0_0", qty);
 
 		File nsb = nsbReader.getNsbFile(path);
 		JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);

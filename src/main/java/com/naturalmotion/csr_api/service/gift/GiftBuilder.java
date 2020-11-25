@@ -16,8 +16,8 @@ public class GiftBuilder {
 		return build(id, 13, brand, element.getPartType(), color.getGrade(), amount.intValue());
 	}
 
-	public JsonObjectBuilder buildEssence(String id) {
-		return build(id, 10, "", 7, 0, 2000);
+	public JsonObjectBuilder buildEssence(String id, BigDecimal qty) {
+		return build(id, 10, "", 7, 0, qty.intValue());
 	}
 
 	public JsonObjectBuilder buildEliteToken(EliteToken token, BigDecimal amount) {

@@ -12,7 +12,7 @@ import com.naturalmotion.csr_api.service.io.NsbException;
 
 public interface GiftService {
 
-	JsonObject addEssence() throws CarException, NsbException;
+	JsonObject addEssence(BigDecimal qty) throws CarException, NsbException;
 
 	JsonObject addFusions(List<FusionParam> colors, List<String> brands) throws NsbException;
 
