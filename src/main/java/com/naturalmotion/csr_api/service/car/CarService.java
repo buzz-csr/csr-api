@@ -16,6 +16,8 @@ public interface CarService {
 
 	public JsonObject elite(int id) throws CarException, NsbException;
 
+	public JsonObject removeElite(int id) throws CarException, NsbException;
+
 	public JsonObject removeEliteLevel() throws NsbException;
 
 	public JsonObject sort() throws NsbException;

@@ -2,7 +2,9 @@ package com.naturalmotion.csr_api.service.car;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -230,14 +232,11 @@ public class CarServiceFileImpl implements CarService {
 		JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
 		JsonArray caowObject = nsbObject.getJsonArray(CAOW);
 		JsonObject jsonCarToUpdate = findCarFromId(id, caowObject);
-		JsonObjectBuilder carBuilder = Json.createObjectBuilder();
 
 		JsonObject newCar = null;
 		if (jsonCarToUpdate != null) {
-			for (Entry<String, JsonValue> entry : jsonCarToUpdate.entrySet()) {
-				carBuilder.add(entry.getKey(), entry.getValue());
-			}
-			carBuilder.add(ELCL, 2);
+			JsonObjectBuilder carBuilder = Json.createObjectBuilder(jsonCarToUpdate);
+			carBuilder.add(ELCL, findEliteLicenseNumber(caowObject));
 
 			newCar = carBuilder.build();
 			JsonArrayBuilder newCaow = createNewCaow(id, caowObject, newCar);
@@ -247,6 +246,27 @@ public class CarServiceFileImpl implements CarService {
 		}
 
 		return newCar;
+	}
+
+	private Integer findEliteLicenseNumber(JsonArray caowObject) throws CarException {
+		Map<Integer, Integer> license = new HashMap<>();
+		license.put(1, 0);
+		license.put(2, 0);
+		license.put(3, 0);
+		for (int index = 0; index < caowObject.size(); index++) {
+			JsonObject jsonCar = caowObject.getJsonObject(index);
+			int elcl = jsonCar.getInt(ELCL);
+			if (elcl > 0) {
+				Integer licenceNumber = license.get(elcl);
+				license.remove(elcl);
+				license.put(elcl, licenceNumber + 1);
+			}
+		}
+		Integer licenseNumber = license.keySet().stream().filter(x -> license.get(x) < 5).findFirst().orElse(null);
+		if (licenseNumber == null) {
+			throw new CarException("No more elite license available");
+		}
+		return licenseNumber;
 	}
 
 	@Override
@@ -311,5 +331,26 @@ public class CarServiceFileImpl implements CarService {
 			cars.stream().forEach(x -> carsList.add(((JsonString) x).getString()));
 		}
 		return carsList;
+	}
+
+	@Override
+	public JsonObject removeElite(int id) throws CarException, NsbException {
+		File nsb = nsbReader.getNsbFile(path);
+		JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
+		JsonArray caowObject = nsbObject.getJsonArray(CAOW);
+		JsonObject jsonCarToUpdate = findCarFromId(id, caowObject);
+		JsonObject newCar = null;
+		if (jsonCarToUpdate != null) {
+			JsonObjectBuilder carBuilder = Json.createObjectBuilder(jsonCarToUpdate);
+			carBuilder.add(ELCL, 0);
+
+			newCar = carBuilder.build();
+			JsonArrayBuilder newCaow = createNewCaow(id, caowObject, newCar);
+			JsonObjectBuilder newNsb = Json.createObjectBuilder(nsbObject);
+			newNsb.add(CAOW, newCaow);
+			fileWriter.write(nsb, newNsb);
+		}
+
+		return newCar;
 	}
 }
