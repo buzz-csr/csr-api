@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.json.JsonObject;
 
+import com.naturalmotion.csr_api.service.car.comparator.ComparatorParameter;
 import com.naturalmotion.csr_api.service.io.NsbException;
 
 public interface CarService {
@@ -20,7 +21,7 @@ public interface CarService {
 
 	public JsonObject removeEliteLevel() throws NsbException;
 
-	public JsonObject sort() throws NsbException;
+	public JsonObject sort(ComparatorParameter param, boolean eliteFirst) throws NsbException;
 
 	public List<String> getEliteCars() throws NsbException;
 }

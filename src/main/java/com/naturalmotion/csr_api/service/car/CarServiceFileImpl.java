@@ -16,7 +16,9 @@ import javax.json.JsonObjectBuilder;
 import javax.json.JsonString;
 import javax.json.JsonValue;
 
-import com.naturalmotion.csr_api.service.car.comparator.CarComparator;
+import com.naturalmotion.csr_api.service.car.comparator.BrandComparator;
+import com.naturalmotion.csr_api.service.car.comparator.ComparatorParameter;
+import com.naturalmotion.csr_api.service.car.comparator.TierComparator;
 import com.naturalmotion.csr_api.service.http.HttpCsrExcetion;
 import com.naturalmotion.csr_api.service.http.HttpFileReader;
 import com.naturalmotion.csr_api.service.io.JsonBuilder;
@@ -298,7 +300,7 @@ public class CarServiceFileImpl implements CarService {
 	}
 
 	@Override
-	public JsonObject sort() throws NsbException {
+	public JsonObject sort(ComparatorParameter param, boolean eliteFirst) throws NsbException {
 		File nsb = nsbReader.getNsbFile(path);
 		JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
 		JsonArray cgpiObject = nsbObject.getJsonArray("cgpi");
@@ -306,7 +308,10 @@ public class CarServiceFileImpl implements CarService {
 		for (int i = 0; i < cgpiObject.size(); i++) {
 			caowList.add(cgpiObject.getInt(i));
 		}
-		caowList.sort(new CarComparator(nsbObject.getJsonArray(CAOW), getEliteCars()));
+
+		List<String> eliteCars = getEliteCars(eliteFirst);
+
+		sort(param, nsbObject, caowList, eliteCars);
 
 		JsonArrayBuilder cgpiBuilder = Json.createArrayBuilder();
 		caowList.forEach(x -> cgpiBuilder.add(x));
@@ -317,6 +322,24 @@ public class CarServiceFileImpl implements CarService {
 		JsonObject result = nsbBuilder.build();
 		fileWriter.write(nsb, result);
 		return result;
+	}
+
+	private void sort(ComparatorParameter param, JsonObject nsbObject, List<Integer> caowList, List<String> eliteCars) {
+		if (ComparatorParameter.BRAND.equals(param)) {
+			caowList.sort(new BrandComparator(nsbObject.getJsonArray(CAOW), eliteCars));
+		} else {
+			caowList.sort(new TierComparator(nsbObject.getJsonArray(CAOW), eliteCars));
+		}
+	}
+
+	private List<String> getEliteCars(boolean eliteFirst) throws NsbException {
+		List<String> eliteCars;
+		if (!eliteFirst) {
+			eliteCars = new ArrayList<>();
+		} else {
+			eliteCars = getEliteCars();
+		}
+		return eliteCars;
 	}
 
 	@Override
