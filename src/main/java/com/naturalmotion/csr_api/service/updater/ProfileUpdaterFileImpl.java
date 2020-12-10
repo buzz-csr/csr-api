@@ -6,12 +6,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.json.Json;
 import javax.json.JsonBuilderFactory;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonReader;
+import javax.json.JsonValue;
 
 import com.naturalmotion.csr_api.Configuration;
 import com.naturalmotion.csr_api.api.EliteTokenParam;
@@ -28,7 +31,9 @@ import com.naturalmotion.csr_api.service.reader.ReaderException;
 
 public class ProfileUpdaterFileImpl implements ProfileUpdater {
 
-    private static final String ELITE_TOKEN_EARNED = "afme";
+    private static final String CCAC = "ccac";
+
+	private static final String ELITE_TOKEN_EARNED = "afme";
 
     private static final String ELITE_TOKEN_SPENT = "afms";
 
@@ -160,10 +165,23 @@ public class ProfileUpdaterFileImpl implements ProfileUpdater {
         eliteTokenSpent.add("Red", 0);
         eliteTokenSpent.add("Yellow", 0);
         newNsbObject.add(ELITE_TOKEN_SPENT, eliteTokenSpent);
+
+        newNsbObject.add(CCAC, cleanCcac(nsbObject));
+
         fileWriter.write(nsb, newNsbObject);
 
         return nsbObject.getJsonObject(ELITE_TOKEN_SPENT);
     }
+
+	private JsonObjectBuilder cleanCcac(JsonObject nsbObject) {
+		JsonObjectBuilder newCcac = Json.createObjectBuilder();
+        JsonObject ccac = nsbObject.getJsonObject(CCAC);
+		Set<Entry<String, JsonValue>> entrySet = ccac.entrySet();
+		for (Entry<String, JsonValue> entry : entrySet) {
+			newCcac.add(entry.getKey(), Json.createArrayBuilder());
+		}
+		return newCcac;
+	}
 
     @Override
     public void updateResourceAfterBan(List<EliteTokenParam> tokens)
