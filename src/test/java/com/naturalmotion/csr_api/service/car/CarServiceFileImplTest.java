@@ -90,6 +90,8 @@ public class CarServiceFileImplTest extends NsbEditedTest {
 						.isEqualTo("[1,2,0,0,0]");
 				assertThat(lvls.get(4).asJsonObject().getJsonArray("fsg").asJsonArray().toString())
 						.isEqualTo("[1,0,0,0,0]");
+
+				assertThat(asJsonObject.getInt("nuub")).isEqualTo(35);
 			}
 		});
 
