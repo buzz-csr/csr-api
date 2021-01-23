@@ -6,6 +6,8 @@ public class CheckReport {
 
 	private String message;
 
+	private Level level;
+
 	public ErrorType getError() {
 		return error;
 	}
@@ -20,6 +22,14 @@ public class CheckReport {
 
 	public void setMessage(String message) {
 		this.message = message;
+	}
+
+	public Level getLevel() {
+		return level;
+	}
+
+	public void setLevel(Level level) {
+		this.level = level;
 	}
 
 }

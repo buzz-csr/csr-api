@@ -10,7 +10,6 @@ import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 
-import com.naturalmotion.csr_api.service.car.CarUpgradeCalculator;
 import com.naturalmotion.csr_api.service.io.JsonBuilder;
 import com.naturalmotion.csr_api.service.io.NsbException;
 import com.naturalmotion.csr_api.service.io.NsbReader;
@@ -20,13 +19,19 @@ public class CheckCarsServiceImpl implements CheckCarsService {
 
 	private static final String CAOW = "caow";
 
-	private static final String NUUB = "nuub";
-
 	private NsbReader nsbReader = new NsbReader();
 
 	private JsonBuilder jsonBuilder = new JsonBuilder();
 
 	private ProfileFileWriter fileWriter = new ProfileFileWriter();
+
+	private NuubChecker nuubChecker = new NuubChecker();
+
+	private FusionChecker fusionCheck;
+
+	public CheckCarsServiceImpl() throws NsbException {
+		fusionCheck = new FusionChecker();
+	}
 
 	@Override
 	public List<CheckReport> check(String path) throws NsbException {
@@ -39,17 +44,15 @@ public class CheckCarsServiceImpl implements CheckCarsService {
 		while (pos < caowObject.size()) {
 
 			JsonObject car = caowObject.getJsonObject(pos);
-			int nbUpgradeBuy = new CarUpgradeCalculator().compute(car);
 
-			int actualupgradeBuy = car.getInt(NUUB);
-			if (actualupgradeBuy != nbUpgradeBuy) {
-				CheckReport checkReport = new CheckReport();
-				checkReport.setError(ErrorType.WRONG_NUUB);
-				checkReport.setMessage(
-						car.getString("crdb") + ": Actualement=" + actualupgradeBuy + ", attendu=" + nbUpgradeBuy);
-				reports.add(checkReport);
+			CheckReport nuubReport = nuubChecker.checkCar(car);
+			if (nuubReport != null) {
+				reports.add(nuubReport);
 			}
-
+			CheckReport fusionReport = fusionCheck.checkCar(car);
+			if (fusionReport != null) {
+				reports.add(fusionReport);
+			}
 			pos++;
 		}
 
@@ -68,16 +71,9 @@ public class CheckCarsServiceImpl implements CheckCarsService {
 		while (pos < caowObject.size()) {
 
 			JsonObject car = caowObject.getJsonObject(pos);
-			int nbUpgradeBuy = new CarUpgradeCalculator().compute(car);
+			JsonObject newCar = nuubChecker.correct(car);
+			newCaowObject.add(newCar);
 
-			int actualupgradeBuy = car.getInt(NUUB);
-			if (actualupgradeBuy != nbUpgradeBuy) {
-				JsonObjectBuilder newCar = Json.createObjectBuilder(car);
-				newCar.add(NUUB, nbUpgradeBuy);
-				newCaowObject.add(newCar);
-			} else {
-				newCaowObject.add(car);
-			}
 			pos++;
 		}
 

@@ -9,14 +9,16 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.naturalmotion.csr_api.service.NsbEditedTest;
+import com.naturalmotion.csr_api.service.io.NsbException;
 
 public class CheckCarsServiceImplTest {
 
-	private CheckCarsServiceImpl service = new CheckCarsServiceImpl();
+	private CheckCarsServiceImpl service;
 
 	@Before
-	public void setup() throws IOException {
+	public void setup() throws IOException, NsbException {
 		new NsbEditedTest().backup();
+		service = new CheckCarsServiceImpl();
 	}
 
 	@After
@@ -27,7 +29,7 @@ public class CheckCarsServiceImplTest {
 	@Test
 	public void testCheck() throws Exception {
 		List<CheckReport> check = service.check("target");
-		Assertions.assertThat(check).hasSize(25);
+		Assertions.assertThat(check).hasSize(29);
 	}
 
 }
