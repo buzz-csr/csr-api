@@ -208,7 +208,7 @@ public class CarServiceFileImpl implements CarService {
 		objectBuilder.add("ttup", carFull.getJsonNumber("ttup"));
 		objectBuilder.add("ttpp", carFull.getJsonNumber("ttpp"));
 		objectBuilder.add("cepi", carFull.getJsonNumber("cepi"));
-		objectBuilder.add("nuub", 35);
+		objectBuilder.add("nuub", new CarUpgradeCalculator().compute(carFull));
 
 		return objectBuilder.build();
 	}

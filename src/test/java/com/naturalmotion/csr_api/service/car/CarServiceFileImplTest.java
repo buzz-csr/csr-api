@@ -7,8 +7,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.Authenticator;
-import java.net.PasswordAuthentication;
 import java.util.Iterator;
 import java.util.List;
 
@@ -31,15 +29,6 @@ public class CarServiceFileImplTest extends NsbEditedTest {
 	@Before
 	public void setup() throws IOException {
 		new NsbEditedTest().backup();
-		Authenticator authenticator = new Authenticator() {
-
-			@Override
-			public PasswordAuthentication getPasswordAuthentication() {
-				return (new PasswordAuthentication("jdesachy", "Juillet$032020".toCharArray()));
-			}
-		};
-		Authenticator.setDefault(authenticator);
-
 	}
 
 	@After
@@ -49,7 +38,7 @@ public class CarServiceFileImplTest extends NsbEditedTest {
 
 	@Test
 	public void testAdd() throws Exception, CarException {
-		service.add("/Cars/Ford/F-150 SVT Raptor/Ruby Red.txt");
+		service.add("/01-Cars/Ford/F-150 SVT Raptor/Ruby Red.txt");
 
 		JsonObject nsbExpected = getNsb("src/test/resources/Edited/nsb.json");
 		assertThat(nsbExpected.getInt("ncui")).isEqualTo(1141);
@@ -100,7 +89,7 @@ public class CarServiceFileImplTest extends NsbEditedTest {
 	@Test
 	public void testReplace() throws Exception {
 		service.replace(197, // BMW_LBM4CoupeCrewRecycled_2014
-				"/Cars/Lamborghini/LB Murcielago LP670-4 SuperVeloce/Arancio Borealis.txt");
+				"/01-Cars/Lamborghini/LB Murciélago LP670-4 SuperVeloce/Arancio Borealis.txt");
 
 		JsonObject search = findCar(197);
 		assertThat(search).isNotNull();
