@@ -290,7 +290,7 @@ public class CarServiceFileImpl implements CarService {
 
 			JsonObject jsonCar = caowObject.getJsonObject(index);
 			if (jsonCar.getInt(CMLV) > 0) {
-				eliteList.add(createEliteCarResult(jsonCar));
+				eliteList.add(createEliteCarResult(jsonCar, index));
 
 				JsonObject carFull = getCarFull(jsonCar.getString(CRDB));
 				JsonObjectBuilder newJsonCar = Json.createObjectBuilder(jsonCar);
@@ -316,10 +316,11 @@ public class CarServiceFileImpl implements CarService {
 		return eliteList.build();
 	}
 
-	private JsonObject createEliteCarResult(JsonObject jsonCar) {
+	private JsonObject createEliteCarResult(JsonObject jsonCar, int index) {
 		JsonObjectBuilder eliteCar = Json.createObjectBuilder();
 		eliteCar.add("name", jsonCar.getString(CRDB));
 		eliteCar.add("level", jsonCar.getInt(CMLV));
+		eliteCar.add("garage", Math.floor(index / 6 + 1));
 		return eliteCar.build();
 	}
 
