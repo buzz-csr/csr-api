@@ -2,6 +2,7 @@ package com.naturalmotion.csr_api.service.car;
 
 import java.util.List;
 
+import javax.json.JsonArray;
 import javax.json.JsonObject;
 
 import com.naturalmotion.csr_api.service.car.comparator.ComparatorParameter;
@@ -19,7 +20,7 @@ public interface CarService {
 
 	public JsonObject removeElite(int id) throws CarException, NsbException;
 
-	public JsonObject removeEliteLevel() throws NsbException;
+	public JsonArray removeEliteLevel() throws NsbException;
 
 	public JsonObject sort(ComparatorParameter param, boolean eliteFirst) throws NsbException;
 

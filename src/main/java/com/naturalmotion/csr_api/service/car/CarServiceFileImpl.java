@@ -28,6 +28,8 @@ import com.naturalmotion.csr_api.service.io.ProfileFileWriter;
 
 public class CarServiceFileImpl implements CarService {
 
+	private static final String UPST = "upst";
+
 	private static final String CMLV = "cmlv";
 
 	private static final String ELCL = "elcl";
@@ -45,6 +47,8 @@ public class CarServiceFileImpl implements CarService {
 	private NsbReader nsbReader = new NsbReader();
 
 	private JsonBuilder jsonBuilder = new JsonBuilder();
+
+	private FusionCalculator fusionCalculator = new FusionCalculator();
 
 	public CarServiceFileImpl(String path) {
 		this.path = path;
@@ -193,8 +197,8 @@ public class CarServiceFileImpl implements CarService {
 		JsonObjectBuilder objectBuilder = Json.createObjectBuilder(carJson);
 		objectBuilder.add(UNID, carId);
 
-		JsonArrayBuilder upst = Json.createArrayBuilder(carFull.getJsonArray("upst"));
-		objectBuilder.add("upst", upst);
+		JsonArrayBuilder upst = Json.createArrayBuilder(carFull.getJsonArray(UPST));
+		objectBuilder.add(UPST, upst);
 		JsonArrayBuilder grsp = Json.createArrayBuilder(carFull.getJsonArray("grsp"));
 		objectBuilder.add("grsp", grsp);
 		objectBuilder.add("fidr", carFull.getJsonNumber("fidr"));
@@ -274,20 +278,31 @@ public class CarServiceFileImpl implements CarService {
 	}
 
 	@Override
-	public JsonObject removeEliteLevel() throws NsbException {
+	public JsonArray removeEliteLevel() throws NsbException {
+		JsonArrayBuilder eliteList = Json.createArrayBuilder();
+
 		File nsb = nsbReader.getNsbFile(path);
 		JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
 		JsonArray caowObject = nsbObject.getJsonArray(CAOW);
 		JsonArrayBuilder caowBuilder = Json.createArrayBuilder();
 
 		for (int index = 0; index < caowObject.size(); index++) {
+
 			JsonObject jsonCar = caowObject.getJsonObject(index);
 			if (jsonCar.getInt(CMLV) > 0) {
+				eliteList.add(createEliteCarResult(jsonCar));
+
 				JsonObject carFull = getCarFull(jsonCar.getString(CRDB));
 				JsonObjectBuilder newJsonCar = Json.createObjectBuilder(jsonCar);
 				newJsonCar.add(CMLV, 0);
 				if (carFull != null) {
-					caowBuilder.add(mergeFusion(newJsonCar.build(), carFull, jsonCar.getInt(UNID)));
+					int actualFusionNb = fusionCalculator.getFusionNumber(jsonCar);
+					int fullFusionNb = fusionCalculator.getFusionNumber(carFull);
+					if (actualFusionNb > fullFusionNb) {
+						caowBuilder.add(mergeFusion(newJsonCar.build(), carFull, jsonCar.getInt(UNID)));
+					}
+				} else {
+					caowBuilder.add(newJsonCar);
 				}
 			} else {
 				caowBuilder.add(jsonCar);
@@ -298,7 +313,14 @@ public class CarServiceFileImpl implements CarService {
 
 		JsonObject result = nsbBuilder.build();
 		fileWriter.write(nsb, result);
-		return result;
+		return eliteList.build();
+	}
+
+	private JsonObject createEliteCarResult(JsonObject jsonCar) {
+		JsonObjectBuilder eliteCar = Json.createObjectBuilder();
+		eliteCar.add("name", jsonCar.getString(CRDB));
+		eliteCar.add("level", jsonCar.getInt(CMLV));
+		return eliteCar.build();
 	}
 
 	@Override
