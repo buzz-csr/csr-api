@@ -284,13 +284,14 @@ public class CarServiceFileImpl implements CarService {
 		File nsb = nsbReader.getNsbFile(path);
 		JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
 		JsonArray caowObject = nsbObject.getJsonArray(CAOW);
+		JsonArray cgpi = nsbObject.getJsonArray("cgpi");
 		JsonArrayBuilder caowBuilder = Json.createArrayBuilder();
 
 		for (int index = 0; index < caowObject.size(); index++) {
 
 			JsonObject jsonCar = caowObject.getJsonObject(index);
 			if (jsonCar.getInt(CMLV) > 0) {
-				eliteList.add(createEliteCarResult(jsonCar, index));
+				eliteList.add(createEliteCarResult(jsonCar, cgpi.indexOf(Json.createValue(index))));
 
 				JsonObject carFull = getCarFull(jsonCar.getString(CRDB));
 				JsonObjectBuilder newJsonCar = Json.createObjectBuilder(jsonCar);
