@@ -301,6 +301,8 @@ public class CarServiceFileImpl implements CarService {
 					int fullFusionNb = fusionCalculator.getFusionNumber(carFull);
 					if (actualFusionNb > fullFusionNb) {
 						caowBuilder.add(mergeFusion(newJsonCar.build(), carFull, jsonCar.getInt(UNID)));
+					} else {
+						caowBuilder.add(newJsonCar);
 					}
 				} else {
 					caowBuilder.add(newJsonCar);
