@@ -116,4 +116,10 @@ public class CarServiceFileImplTest extends NsbEditedTest {
 		assertThat(eliteCars).hasSize(34);
 	}
 
+	@Test
+	public void testListAll() throws Exception {
+		List<String> listAll = service.listAll();
+		assertThat(listAll.size()).isGreaterThan(0);
+	}
+
 }

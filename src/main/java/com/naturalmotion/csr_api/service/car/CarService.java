@@ -16,6 +16,8 @@ public interface CarService {
 
 	public JsonObject add(String newCarPath) throws CarException, NsbException;
 
+	public JsonObject addId(String carId) throws CarException, NsbException;
+
 	public JsonObject elite(int id) throws CarException, NsbException;
 
 	public JsonObject removeElite(int id) throws CarException, NsbException;
@@ -25,4 +27,6 @@ public interface CarService {
 	public JsonObject sort(ComparatorParameter param, boolean eliteFirst) throws NsbException;
 
 	public List<String> getEliteCars() throws NsbException;
+
+	public List<String> listAll() throws NsbException;
 }

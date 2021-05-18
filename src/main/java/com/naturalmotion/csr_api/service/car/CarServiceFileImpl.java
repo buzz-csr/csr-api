@@ -2,6 +2,7 @@ package com.naturalmotion.csr_api.service.car;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -403,5 +404,45 @@ public class CarServiceFileImpl implements CarService {
 		}
 
 		return newCar;
+	}
+
+	@Override
+	public List<String> listAll() throws NsbException {
+		JsonObject jsonFull = nsbReader.getNsbFull();
+		JsonArray cars = jsonFull.getJsonArray(CAOW);
+		List<String> result = new ArrayList<String>();
+		cars.forEach(x -> result.add(x.asJsonObject().getString("crdb")));
+		Collections.sort(result);
+		return result;
+	}
+
+	@Override
+	public JsonObject addId(String crdb) throws CarException, NsbException {
+		File nsb = nsbReader.getNsbFile(path);
+		JsonObject nsbObject = jsonBuilder.readJsonObject(nsb);
+
+		JsonArray caowObject = nsbObject.getJsonArray(CAOW);
+		JsonArrayBuilder cgpiNew = getCgpiNew(nsbObject, caowObject);
+
+		int carId = nsbObject.getInt("ncui");
+		JsonObject carFull = getCarFull(crdb);
+		JsonObjectBuilder carBuilder = Json.createObjectBuilder(carFull);
+		carBuilder.add(UNID, carId);
+		carBuilder.add("nuub", new CarUpgradeCalculator().compute(carFull));
+		JsonObject newCarFull = carBuilder.build();
+
+		JsonArrayBuilder caow = Json.createArrayBuilder(caowObject);
+		caow.add(newCarFull);
+
+		JsonObjectBuilder copyNsbObject = Json.createObjectBuilder(nsbObject);
+		copyNsbObject.add(CAOW, caow);
+		copyNsbObject.add("cgpi", cgpiNew);
+		copyNsbObject.add("ncui", ++carId);
+		copyNsbObject.add("cidc", new CidcUpdater().update(newCarFull.getString("crdb"), nsbObject));
+		copyNsbObject.add("cid2", new Cid2Updater().update(newCarFull.getString("crdb"), nsbObject));
+
+		fileWriter.write(nsb, copyNsbObject);
+		return newCarFull;
+
 	}
 }
